@@ -4,13 +4,13 @@
   "version": "0.0.0",
   "author": "Stably",
   "private": true,
-  "homepage": "https://github.com/stablyhq/stably-runner-action#readme",
+  "homepage": "https://github.com/stablyai/stably-runner-action#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/stablyhq/stably-runner-action.git"
+    "url": "git+https://github.com/stablyai/stably-runner-action.git"
   },
   "bugs": {
-    "url": "https://github.com/stablyhq/stably-runner-action/issues"
+    "url": "https://github.com/stablyai/stably-runner-action/issues"
   },
   "keywords": [
     "actions",

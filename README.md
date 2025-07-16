@@ -48,7 +48,7 @@ jobs:
 
       - name: Stably Runner Action
         id: stably-runner
-        uses: stablyhq/stably-runner-action@v3
+        uses: stablyai/stably-runner-action@v3
         with:
           api-key: ${{ secrets.API_KEY }}
           test-suite-id: TEST_SUITE_ID
@@ -73,7 +73,7 @@ Considering we have an existing test suite that we run in production with tests 
 ```yaml
 - name: Stably Runner Action
    id: stably-runner
-   uses: stablyhq/stably-runner-action@v3
+   uses: stablyai/stably-runner-action@v3
    with:
       api-key: ${{ secrets.API_KEY }}
       test-suite-id: TEST_SUITE_ID
