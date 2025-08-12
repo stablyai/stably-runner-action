@@ -59,6 +59,10 @@ inputs:
       The key is the variable name and the value is the value to override it with.
       The value can be a string or an object with a 'value' property and an optional 'sensitive' property.
     default: '{}'
+  note:
+    description: |-
+      Optional note to add to the test run to help identify it.
+      This note will be included in the test run metadata.
 
 # Define your outputs here.
 outputs:

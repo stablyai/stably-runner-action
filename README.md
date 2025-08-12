@@ -14,6 +14,7 @@ Use this GitHub action to run tests on [stably.ai](https://stably.ai)
 | async              |              | false                 | If set, will launch the tests but not wait for them to finish and the action will always output success. Note: Github comments will not function if this is set                                                                                                                                    |
 | environment        |              | PRODUCTION            | The environment to inherit variables from.                                                                                                                                                                                                                                                         |
 | variable-overrides |              |                       | A JSON object containing variable overrides. Each key is a variable name and the value can be either a string or an object with `value` and optional `sensitive` properties.                                                                                                                       |
+| note              |              |                       | Optional note to add to the test run to help identify it. This note will be included in the test run metadata.                                                                                                                                                                               |
 
 ## Outputs
 
