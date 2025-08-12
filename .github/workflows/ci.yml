@@ -56,7 +56,7 @@ jobs:
         uses: ./
         with:
           api-key: ${{ secrets.API_KEY }}
-          test-suite-id: cme95l1w1000njx04y2wro2ka
+          test-suite-id: clo3w9pcj0001ml08rdits9es
 
       - name: Print Output
         id: output
