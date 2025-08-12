@@ -24,7 +24,7 @@ jobs:
         uses: ./
         with:
           api-key: ${{ secrets.API_KEY }}
-          test-suite-id: cm51jnwks0001l103b5lrprjs
+          test-suite-id: clo3w9pcj0001ml08rdits9es
           github-comment: true
           github-token: ${{ secrets.GITHUB_TOKEN }}
           url-replacement: |-
