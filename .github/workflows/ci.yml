@@ -57,6 +57,7 @@ jobs:
         with:
           api-key: ${{ secrets.API_KEY }}
           test-suite-id: clo3w9pcj0001ml08rdits9es
+          note: 'Test run via Github Action'
 
       - name: Print Output
         id: output
