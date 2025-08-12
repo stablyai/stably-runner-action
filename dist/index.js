@@ -29286,7 +29286,7 @@ async function startTestSuite({ testSuiteId, apiKey, options, githubMetadata }) 
             ? [options.urlReplacement]
             : undefined,
         metadata: githubMetadata
-            ? { git: { branch: githubMetadata.branch } }
+            ? { git: { branch: githubMetadata.branch }, note: options.note }
             : undefined,
         environment: options.environment ? options.environment : undefined,
         variableOverrides: options.variableOverrides
@@ -29536,6 +29536,7 @@ function parseInput() {
     const environment = (0, core_1.getInput)('environment');
     const variableOverridesJson = (0, core_1.getInput)('variable-overrides');
     const variableOverrides = parseObjectInput('variable-overrides', variableOverridesJson);
+    const note = (0, core_1.getInput)('note');
     return {
         apiKey,
         testSuiteId,
@@ -29544,7 +29545,8 @@ function parseInput() {
         githubComment,
         runInAsyncMode,
         environment,
-        variableOverrides
+        variableOverrides,
+        note
     };
 }
 exports.parseInput = parseInput;
@@ -29581,7 +29583,7 @@ const url_1 = __nccwpck_require__(6437);
  */
 async function run() {
     try {
-        const { apiKey, urlReplacement, githubComment, githubToken, testSuiteId, runInAsyncMode, environment, variableOverrides } = (0, input_1.parseInput)();
+        const { apiKey, urlReplacement, githubComment, githubToken, testSuiteId, runInAsyncMode, environment, variableOverrides, note } = (0, input_1.parseInput)();
         const shouldTunnel = urlReplacement &&
             new URL(urlReplacement.replacement).hostname === 'localhost';
         if (urlReplacement && shouldTunnel) {
@@ -29597,7 +29599,8 @@ async function run() {
             options: {
                 urlReplacement,
                 environment,
-                variableOverrides
+                variableOverrides,
+                note
             },
             githubMetadata
         });
