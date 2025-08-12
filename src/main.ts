@@ -20,7 +20,8 @@ export async function run(): Promise<void> {
       testSuiteId,
       runInAsyncMode,
       environment,
-      variableOverrides
+      variableOverrides,
+      note
     } = parseInput();
 
     const shouldTunnel =
@@ -41,7 +42,8 @@ export async function run(): Promise<void> {
       options: {
         urlReplacement,
         environment,
-        variableOverrides
+        variableOverrides,
+        note
       },
       githubMetadata
     });

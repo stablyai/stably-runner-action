@@ -67,6 +67,8 @@ export function parseInput() {
     variableOverridesJson
   );
 
+  const note = getInput('note');
+
   return {
     apiKey,
     testSuiteId,
@@ -75,7 +77,8 @@ export function parseInput() {
     githubComment,
     runInAsyncMode,
     environment,
-    variableOverrides
+    variableOverrides,
+    note
   };
 }
 
