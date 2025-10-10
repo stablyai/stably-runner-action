@@ -132,7 +132,7 @@ function listTestMarkDown({
   return tests
     .map(
       ({ runId, testName }) =>
-        `  * [${testName}](http://app.stably.ai/project/${projectId}/g_${testSuiteRunId}/run/${runId})`
+        `  * [${testName}](http://app.stably.ai/project/${projectId}/history/g_${testSuiteRunId}/run/${runId})`
     )
     .join('\n');
 }
