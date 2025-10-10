@@ -66,10 +66,12 @@ jobs:
 
 ## Testing containerized/localized applications
 
-You can use the `variable-overrides` option to enable containrized/local testing by
-replacing the original URL with a localhost URL.
+You can use the `variable-overrides` option to enable containrized/local testing
+by replacing the original URL with a localhost URL.
 
-Considering we have an existing test suite that we run in production with tests using an envrionment variables `APP_URL`, you can test your local application running in your CI at `http://localhost:3000` using this configuration:
+Considering we have an existing test suite that we run in production with tests
+using an envrionment variables `APP_URL`, you can test your local application
+running in your CI at `http://localhost:3000` using this configuration:
 
 ```yaml
 - name: Stably Runner Action

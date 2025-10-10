@@ -265,7 +265,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 
-@stablyai/runner-sdk
+@stablyhq/runner-sdk
 ISC
 
 before-after-hook

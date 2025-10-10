@@ -29403,12 +29403,12 @@ async function upsertGitHubComment(testSuiteId, githubToken, resp) {
 
   ${failedTests.length > 0
         ? (0, ts_dedent_1.default) `Failed Tests:
-      ${listTestMarkDown(failedTests, projectId)}`
+      ${listTestMarkDown({ testSuiteRunId, tests: failedTests, projectId })}`
         : ''}
 
   ${undefinedTests.length > 0
         ? (0, ts_dedent_1.default) `Unable to run tests:
-      ${listTestMarkDown(undefinedTests, projectId)}`
+      ${listTestMarkDown({ testSuiteRunId, tests: undefinedTests, projectId })}`
         : ''}
   
   
@@ -29472,9 +29472,9 @@ async function upsertGitHubComment(testSuiteId, githubToken, resp) {
     }
 }
 exports.upsertGitHubComment = upsertGitHubComment;
-function listTestMarkDown(tests, projectId) {
+function listTestMarkDown({ testSuiteRunId, tests, projectId }) {
     return tests
-        .map(x => `  * [${x.testName}](http://app.stably.ai/project/${projectId}/test/${x.testId})`)
+        .map(({ runId, testName }) => `  * [${testName}](http://app.stably.ai/project/${projectId}/history/g_${testSuiteRunId}/run/${runId})`)
         .join('\n');
 }
 
