@@ -125,7 +125,7 @@ function listTestMarkDown({
     runId: string;
     testName: string;
     testId: string;
-    success?: boolean | undefined;
+    success?: boolean;
   }[];
   projectId: string;
 }) {
