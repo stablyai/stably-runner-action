@@ -42,14 +42,14 @@ export async function upsertGitHubComment(
   ${
     failedTests.length > 0
       ? dedent`Failed Tests:
-      ${listTestMarkDown(failedTests, projectId)}`
+      ${listTestMarkDown({ testSuiteRunId, tests: failedTests, projectId })}`
       : ''
   }
 
   ${
     undefinedTests.length > 0
       ? dedent`Unable to run tests:
-      ${listTestMarkDown(undefinedTests, projectId)}`
+      ${listTestMarkDown({ testSuiteRunId, tests: undefinedTests, projectId })}`
       : ''
   }
   
@@ -115,18 +115,24 @@ export async function upsertGitHubComment(
   }
 }
 
-function listTestMarkDown(
+function listTestMarkDown({
+  testSuiteRunId,
+  tests,
+  projectId
+}: {
+  testSuiteRunId: string;
   tests: {
+    runId: string;
     testName: string;
     testId: string;
     success?: boolean | undefined;
-  }[],
-  projectId: string
-) {
+  }[];
+  projectId: string;
+}) {
   return tests
     .map(
-      x =>
-        `  * [${x.testName}](http://app.stably.ai/project/${projectId}/test/${x.testId})`
+      ({ runId, testName }) =>
+        `  * [${testName}](http://app.stably.ai/project/${projectId}/g_${testSuiteRunId}/run/${runId})`
     )
     .join('\n');
 }

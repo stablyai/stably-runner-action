@@ -19,7 +19,12 @@ type RunResponse = {
 };
 
 export type ResultResponse = RunResponse & {
-  results: { testId: string; testName: string; status?: TestStatus }[];
+  results: {
+    runId: string;
+    testId: string;
+    testName: string;
+    status?: TestStatus;
+  }[];
 };
 
 type StatusResponse = {
