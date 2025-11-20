@@ -29566,7 +29566,7 @@ async function upsertGitHubCommentV2(projectId, runId, githubToken, resp) {
             ? await octokit.rest.repos
                 .listCommentsForCommit({
                 ...github_1.context.repo,
-                commit_sha: github_1.context.payload.after
+                commit_sha: commitSha
             })
                 .catch(() => {
                 return { data: [] };
@@ -29725,7 +29725,7 @@ const url_1 = __nccwpck_require__(6437);
 async function run() {
     try {
         const input = (0, input_1.parseInput)();
-        const { version, apiKey, githubComment, githubToken, runInAsyncMode } = input;
+        const { version } = input;
         if (version === 'v1') {
             await runV1(input);
         }
