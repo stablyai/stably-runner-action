@@ -7,6 +7,14 @@ inputs:
   api-key:
     description: 'Your API key'
     required: true
+  project-id:
+    description: |-
+      The project ID to execute (v2 Playwright Runner).
+      Use this OR test-suite-id, not both.
+  run-group-names:
+    description: |-
+      Newline-separated list of Playwright project names to run (v2 only).
+      Optional - if not provided, all projects will run.
   run-group-ids:
     description: |-
       Newline separated list of run group IDs.
@@ -19,8 +27,9 @@ inputs:
     deprecationMessage:
       'We renamed test groups to test suites. Use test-suite-id instead.'
   test-suite-id:
-    description: The test suite ID to execute
-    required: true
+    description: |-
+      The test suite ID to execute (v1 Test Suite Runner).
+      Use this OR project-id, not both.
   domain-override:
     description: |-
       Newline-separated tuple (pair) with original first as first line and the replacement second.
@@ -68,6 +77,8 @@ inputs:
 outputs:
   success:
     description: 'Bool if run was successful'
+  testSuiteRunId:
+    description: 'The test suite run ID (v1) or run ID (v2)'
 
 runs:
   using: node20

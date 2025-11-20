@@ -27,6 +27,40 @@ export type ResultResponse = RunResponse & {
   }[];
 };
 
+// V2 Playwright Runner Types
+type PlaywrightRunResponse = {
+  runId: string;
+};
+
+type PlaywrightRunStatus =
+  | 'RUNNING'
+  | 'PASSED'
+  | 'FAILED'
+  | 'TIMEDOUT'
+  | 'CANCELLED'
+  | 'INTERRUPTED';
+
+type PlaywrightTestCaseStatus =
+  | 'RUNNING'
+  | 'PASSED'
+  | 'FAILED'
+  | 'TIMEDOUT'
+  | 'SKIPPED'
+  | 'INTERRUPTED';
+
+export type PlaywrightResultResponse = {
+  status: PlaywrightRunStatus;
+  startedAt: string;
+  finishedAt?: string;
+  results?: {
+    testCases: {
+      title: string;
+      status: PlaywrightTestCaseStatus;
+      durationMs?: number;
+    }[];
+  };
+};
+
 type StatusResponse = {
   status: 'RUNNING' | 'FINISHED';
 };
@@ -151,4 +185,85 @@ export async function waitForTestSuiteRunResult({
   const testSuiteRunResultResponse =
     await httpClient.getJson<ResultResponse>(resultUrl);
   return unpackOrThrow(testSuiteRunResultResponse, 'testSuiteRunResult');
+}
+
+// V2 Playwright Runner API Functions
+
+export async function startPlaywrightRun({
+  projectId,
+  apiKey,
+  options
+}: {
+  projectId: string;
+  apiKey: string;
+  options: {
+    runGroupNames?: string[];
+    variableOverrides?: Record<
+      string,
+      string | { value: string | object; sensitive?: boolean }
+    >;
+  };
+}): Promise<PlaywrightRunResponse> {
+  const httpClient = new HttpClient('github-action', [
+    new BearerCredentialHandler(apiKey)
+  ]);
+
+  const body = {
+    runGroupName: options.runGroupNames,
+    variableOverrides: options.variableOverrides
+  };
+
+  const runUrl = new URL(`/v1/projects/${projectId}/runs`, API_ENDPOINT).href;
+  const runResponse = await httpClient.postJson<PlaywrightRunResponse>(
+    runUrl,
+    body,
+    {
+      'Content-Type': 'application/json'
+    }
+  );
+  return unpackOrThrow(runResponse, 'playwrightRun');
+}
+
+export async function waitForPlaywrightRunResult({
+  projectId,
+  runId,
+  apiKey
+}: {
+  projectId: string;
+  runId: string;
+  apiKey: string;
+}): Promise<PlaywrightResultResponse> {
+  const httpClient = new HttpClient('github-action', [
+    new BearerCredentialHandler(apiKey)
+  ]);
+
+  debug(`Starting to poll for playwright runId: ${runId}`);
+
+  const statusUrl = new URL(
+    `/v1/projects/${projectId}/runs/${runId}`,
+    API_ENDPOINT
+  ).href;
+
+  // Start polling for status
+  const pollStartEpochMs = Date.now();
+  while (true) {
+    // Check for timeout
+    if (Date.now() - pollStartEpochMs > POLLING_TIMEOUT_MS) {
+      throw new Error(
+        `Polling for playwright run status timed out after 24 hours for runId: ${runId}`
+      );
+    }
+
+    const runStatusResponse =
+      await httpClient.getJson<PlaywrightResultResponse>(statusUrl);
+    const runStatus = unpackOrThrow(runStatusResponse, 'playwrightRunStatus');
+
+    if (runStatus.status !== 'RUNNING') {
+      return runStatus; // Return the full result when finished
+    }
+
+    // Wait for 5 seconds before polling again
+    await new Promise(resolve => setTimeout(resolve, 5000));
+    debug(`Polling status for playwright runId: ${runId}`);
+  }
 }

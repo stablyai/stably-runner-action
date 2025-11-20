@@ -29258,7 +29258,7 @@ function wrappy (fn, cb) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.waitForTestSuiteRunResult = exports.startTestSuite = void 0;
+exports.waitForPlaywrightRunResult = exports.startPlaywrightRun = exports.waitForTestSuiteRunResult = exports.startTestSuite = void 0;
 const core_1 = __nccwpck_require__(2186);
 const http_client_1 = __nccwpck_require__(6255);
 const auth_1 = __nccwpck_require__(5526);
@@ -29328,6 +29328,46 @@ async function waitForTestSuiteRunResult({ testSuiteRunId, apiKey }) {
     return unpackOrThrow(testSuiteRunResultResponse, 'testSuiteRunResult');
 }
 exports.waitForTestSuiteRunResult = waitForTestSuiteRunResult;
+// V2 Playwright Runner API Functions
+async function startPlaywrightRun({ projectId, apiKey, options }) {
+    const httpClient = new http_client_1.HttpClient('github-action', [
+        new auth_1.BearerCredentialHandler(apiKey)
+    ]);
+    const body = {
+        runGroupName: options.runGroupNames,
+        variableOverrides: options.variableOverrides
+    };
+    const runUrl = new URL(`/v1/projects/${projectId}/runs`, API_ENDPOINT).href;
+    const runResponse = await httpClient.postJson(runUrl, body, {
+        'Content-Type': 'application/json'
+    });
+    return unpackOrThrow(runResponse, 'playwrightRun');
+}
+exports.startPlaywrightRun = startPlaywrightRun;
+async function waitForPlaywrightRunResult({ projectId, runId, apiKey }) {
+    const httpClient = new http_client_1.HttpClient('github-action', [
+        new auth_1.BearerCredentialHandler(apiKey)
+    ]);
+    (0, core_1.debug)(`Starting to poll for playwright runId: ${runId}`);
+    const statusUrl = new URL(`/v1/projects/${projectId}/runs/${runId}`, API_ENDPOINT).href;
+    // Start polling for status
+    const pollStartEpochMs = Date.now();
+    while (true) {
+        // Check for timeout
+        if (Date.now() - pollStartEpochMs > POLLING_TIMEOUT_MS) {
+            throw new Error(`Polling for playwright run status timed out after 24 hours for runId: ${runId}`);
+        }
+        const runStatusResponse = await httpClient.getJson(statusUrl);
+        const runStatus = unpackOrThrow(runStatusResponse, 'playwrightRunStatus');
+        if (runStatus.status !== 'RUNNING') {
+            return runStatus; // Return the full result when finished
+        }
+        // Wait for 5 seconds before polling again
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        (0, core_1.debug)(`Polling status for playwright runId: ${runId}`);
+    }
+}
+exports.waitForPlaywrightRunResult = waitForPlaywrightRunResult;
 
 
 /***/ }),
@@ -29372,7 +29412,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.upsertGitHubComment = void 0;
+exports.upsertGitHubCommentV2 = exports.upsertGitHubComment = void 0;
 const github_1 = __nccwpck_require__(5438);
 const ts_dedent_1 = __importDefault(__nccwpck_require__(3604));
 const url_1 = __nccwpck_require__(6437);
@@ -29477,6 +29517,97 @@ function listTestMarkDown({ testSuiteRunId, tests, projectId }) {
         .map(({ runId, testName }) => `  * [${testName}](http://app.stably.ai/project/${projectId}/history/g_${testSuiteRunId}/run/${runId})`)
         .join('\n');
 }
+async function upsertGitHubCommentV2(projectId, runId, githubToken, resp) {
+    const octokit = (0, github_1.getOctokit)(githubToken);
+    const result = resp.result;
+    const testCases = result?.results?.testCases || [];
+    const failedTests = testCases.filter(x => x.status === 'FAILED');
+    const passedTests = testCases.filter(x => x.status === 'PASSED');
+    const skippedTests = testCases.filter(x => x.status === 'SKIPPED');
+    const commentIdentiifer = `<!-- stably_playwright_${projectId} -->`;
+    const dashboardUrl = `https://app.stably.ai/project/${projectId}/playwright-runs/${runId}`;
+    // prettier-ignore
+    const body = (0, ts_dedent_1.default) `${commentIdentiifer}
+  # [Stably](https://stably.ai/) Playwright Runner - Project ${projectId}
+
+  Test Run Result: ${resp.error
+        ? '❌ Error - The Action ran into an error while calling the Stably backend. Please re-run'
+        : failedTests.length === 0 && result?.status === 'PASSED'
+            ? `🟢 Success (${passedTests.length}/${testCases.length} tests passed) [[dashboard]](${dashboardUrl})`
+            : `🔴 Failure (${failedTests.length}/${testCases.length} tests failed, status: ${result?.status}) [[dashboard]](${dashboardUrl})`}
+  
+
+  ${failedTests.length > 0
+        ? (0, ts_dedent_1.default) `Failed Tests:
+      ${failedTests.map(t => `  * ${t.title} (${t.durationMs ? `${t.durationMs}ms` : 'N/A'})`).join('\n')}`
+        : ''}
+
+  ${skippedTests.length > 0
+        ? (0, ts_dedent_1.default) `Skipped Tests:
+      ${skippedTests.map(t => `  * ${t.title}`).join('\n')}`
+        : ''}
+  
+  
+  ---
+  _This comment was generated from [stably-runner-action](https://github.com/marketplace/actions/stably-runner)_
+`;
+    // Check if existing comment exists
+    const commitSha = github_1.context.payload.after || github_1.context.sha;
+    const { data: comments } = github_1.context.payload.pull_request
+        ? await octokit.rest.issues
+            .listComments({
+            ...github_1.context.repo,
+            issue_number: github_1.context.payload.pull_request.number
+        })
+            .catch(() => {
+            return { data: [] };
+        })
+        : commitSha
+            ? await octokit.rest.repos
+                .listCommentsForCommit({
+                ...github_1.context.repo,
+                commit_sha: github_1.context.payload.after
+            })
+                .catch(() => {
+                return { data: [] };
+            })
+            : { data: [] };
+    const existingCommentId = comments.find(comment => comment?.body?.startsWith(commentIdentiifer))?.id;
+    // Create or update commit/PR comment
+    if (github_1.context.payload.pull_request) {
+        if (existingCommentId) {
+            await octokit.rest.issues.updateComment({
+                ...github_1.context.repo,
+                comment_id: existingCommentId,
+                body
+            });
+        }
+        else {
+            await octokit.rest.issues.createComment({
+                ...github_1.context.repo,
+                body,
+                issue_number: github_1.context.payload.pull_request.number
+            });
+        }
+    }
+    else if (commitSha) {
+        if (existingCommentId) {
+            await octokit.rest.repos.updateCommitComment({
+                ...github_1.context.repo,
+                comment_id: existingCommentId,
+                body
+            });
+        }
+        else {
+            await octokit.rest.repos.createCommitComment({
+                ...github_1.context.repo,
+                body,
+                commit_sha: commitSha
+            });
+        }
+    }
+}
+exports.upsertGitHubCommentV2 = upsertGitHubCommentV2;
 
 
 /***/ }),
@@ -29488,7 +29619,6 @@ function listTestMarkDown({ testSuiteRunId, tests, projectId }) {
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.parseInput = void 0;
-const node_console_1 = __nccwpck_require__(27);
 const core_1 = __nccwpck_require__(2186);
 const NEWLINE_REGEX = /\r|\n/;
 const TRUE_VALUES = new Set(['true', 'yes', '1']);
@@ -29500,19 +29630,24 @@ function getList(name, options) {
 }
 function parseInput() {
     const apiKey = (0, core_1.getInput)('api-key', { required: true });
-    // Supporting deprecating of runGroupIds
+    // V2 inputs
+    const projectId = (0, core_1.getInput)('project-id');
+    const runGroupNames = getList('run-group-names').filter(Boolean);
+    // V1 inputs (supporting deprecating of runGroupIds)
     const testSuiteIdInput = (0, core_1.getInput)('test-suite-id');
     const runGroupIdsInput = getList('run-group-ids');
     const testGroupIdInput = (0, core_1.getInput)('test-group-id');
     const testSuiteId = testSuiteIdInput || testGroupIdInput || runGroupIdsInput.at(0);
-    if (!testSuiteId) {
-        (0, node_console_1.debug)(`testGroupId: ${testSuiteId}`);
-        (0, node_console_1.debug)(`testSuiteId: ${testSuiteIdInput}`);
-        (0, node_console_1.debug)(`runGroupIdsInput: ${runGroupIdsInput}`);
-        (0, node_console_1.debug)(`testGroupIdInput: ${testGroupIdInput}`);
-        (0, core_1.setFailed)('the `testGroupId` input is required');
-        throw Error('the `testGroupId` input is required');
+    // Validation: require either projectId (v2) OR testSuiteId (v1), but not both
+    if (projectId && testSuiteId) {
+        (0, core_1.setFailed)('Cannot use both project-id (v2) and test-suite-id (v1). Please use one or the other.');
+        throw Error('Cannot use both project-id (v2) and test-suite-id (v1). Please use one or the other.');
     }
+    if (!projectId && !testSuiteId) {
+        (0, core_1.setFailed)('Either project-id (v2) or test-suite-id (v1) is required. Please provide one.');
+        throw Error('Either project-id (v2) or test-suite-id (v1) is required. Please provide one.');
+    }
+    const version = projectId ? 'v2' : 'v1';
     // @deprecated
     const deprecatedRawUrlReplacementInput = getList('domain-override');
     const newRawUrlReplacementInput = getList('url-replacement');
@@ -29538,9 +29673,15 @@ function parseInput() {
     const variableOverrides = parseObjectInput('variable-overrides', variableOverridesJson);
     const note = (0, core_1.getInput)('note');
     return {
+        version,
         apiKey,
+        // V1 fields
         testSuiteId,
         urlReplacement,
+        // V2 fields
+        projectId,
+        runGroupNames: runGroupNames.length > 0 ? runGroupNames : undefined,
+        // Shared fields
         githubToken: githubToken || process.env.GITHUB_TOKEN,
         githubComment,
         runInAsyncMode,
@@ -29583,55 +29724,13 @@ const url_1 = __nccwpck_require__(6437);
  */
 async function run() {
     try {
-        const { apiKey, urlReplacement, githubComment, githubToken, testSuiteId, runInAsyncMode, environment, variableOverrides, note } = (0, input_1.parseInput)();
-        const shouldTunnel = urlReplacement &&
-            new URL(urlReplacement.replacement).hostname === 'localhost';
-        if (urlReplacement && shouldTunnel) {
-            const tunnel = await (0, runner_sdk_1.startTunnel)(urlReplacement.replacement);
-            urlReplacement.replacement = tunnel.url;
+        const input = (0, input_1.parseInput)();
+        const { version, apiKey, githubComment, githubToken, runInAsyncMode } = input;
+        if (version === 'v1') {
+            await runV1(input);
         }
-        const githubMetadata = githubToken
-            ? await (0, fetch_metadata_1.fetchMetadata)(githubToken)
-            : undefined;
-        const { testSuiteRunId } = await (0, api_1.startTestSuite)({
-            testSuiteId,
-            apiKey,
-            options: {
-                urlReplacement,
-                environment,
-                variableOverrides,
-                note
-            },
-            githubMetadata
-        });
-        (0, core_1.setOutput)('testSuiteRunId', testSuiteRunId);
-        if (runInAsyncMode) {
-            return;
-        }
-        try {
-            const runResult = await (0, api_1.waitForTestSuiteRunResult)({
-                testSuiteRunId,
-                apiKey
-            });
-            const numFailedTests = runResult.results.filter(({ status }) => status === 'FAILED').length;
-            (0, core_1.setOutput)('success', numFailedTests === 0);
-            if (numFailedTests > 0) {
-                const suiteRunDashboardUrl = (0, url_1.getSuiteRunDashboardUrl)({
-                    projectId: runResult.projectId,
-                    testSuiteRunId
-                });
-                (0, core_1.setFailed)(`Test suite run failed (${numFailedTests}/${runResult.results.length} tests). [Dashboard](${suiteRunDashboardUrl})`);
-            }
-            // Github Comment Code
-            if (githubComment && githubToken) {
-                await (0, github_comment_1.upsertGitHubComment)(testSuiteId, githubToken, {
-                    result: runResult
-                });
-            }
-        }
-        catch (e) {
-            (0, core_1.debug)(`API call error: ${e}`);
-            (0, core_1.setFailed)(e instanceof Error ? e.message : `An unknown error occurred`);
+        else {
+            await runV2(input);
         }
     }
     catch (error) {
@@ -29646,6 +29745,103 @@ async function run() {
     }
 }
 exports.run = run;
+async function runV1(input) {
+    const { apiKey, urlReplacement, githubComment, githubToken, testSuiteId, runInAsyncMode, environment, variableOverrides, note } = input;
+    if (!testSuiteId) {
+        throw new Error('testSuiteId is required for v1');
+    }
+    const shouldTunnel = urlReplacement &&
+        new URL(urlReplacement.replacement).hostname === 'localhost';
+    if (urlReplacement && shouldTunnel) {
+        const tunnel = await (0, runner_sdk_1.startTunnel)(urlReplacement.replacement);
+        urlReplacement.replacement = tunnel.url;
+    }
+    const githubMetadata = githubToken
+        ? await (0, fetch_metadata_1.fetchMetadata)(githubToken)
+        : undefined;
+    const { testSuiteRunId } = await (0, api_1.startTestSuite)({
+        testSuiteId,
+        apiKey,
+        options: {
+            urlReplacement,
+            environment,
+            variableOverrides,
+            note
+        },
+        githubMetadata
+    });
+    (0, core_1.setOutput)('testSuiteRunId', testSuiteRunId);
+    if (runInAsyncMode) {
+        return;
+    }
+    try {
+        const runResult = await (0, api_1.waitForTestSuiteRunResult)({
+            testSuiteRunId,
+            apiKey
+        });
+        const numFailedTests = runResult.results.filter(({ status }) => status === 'FAILED').length;
+        (0, core_1.setOutput)('success', numFailedTests === 0);
+        if (numFailedTests > 0) {
+            const suiteRunDashboardUrl = (0, url_1.getSuiteRunDashboardUrl)({
+                projectId: runResult.projectId,
+                testSuiteRunId
+            });
+            (0, core_1.setFailed)(`Test suite run failed (${numFailedTests}/${runResult.results.length} tests). [Dashboard](${suiteRunDashboardUrl})`);
+        }
+        // Github Comment Code
+        if (githubComment && githubToken) {
+            await (0, github_comment_1.upsertGitHubComment)(testSuiteId, githubToken, {
+                result: runResult
+            });
+        }
+    }
+    catch (e) {
+        (0, core_1.debug)(`API call error: ${e}`);
+        (0, core_1.setFailed)(e instanceof Error ? e.message : `An unknown error occurred`);
+    }
+}
+async function runV2(input) {
+    const { apiKey, projectId, runGroupNames, githubComment, githubToken, runInAsyncMode, variableOverrides } = input;
+    if (!projectId) {
+        throw new Error('projectId is required for v2');
+    }
+    const { runId } = await (0, api_1.startPlaywrightRun)({
+        projectId,
+        apiKey,
+        options: {
+            runGroupNames,
+            variableOverrides
+        }
+    });
+    (0, core_1.setOutput)('testSuiteRunId', runId);
+    if (runInAsyncMode) {
+        return;
+    }
+    try {
+        const runResult = await (0, api_1.waitForPlaywrightRunResult)({
+            projectId,
+            runId,
+            apiKey
+        });
+        const numFailedTests = runResult.results?.testCases.filter(({ status }) => status === 'FAILED')
+            .length ?? 0;
+        const totalTests = runResult.results?.testCases.length ?? 0;
+        (0, core_1.setOutput)('success', numFailedTests === 0 && runResult.status === 'PASSED');
+        if (numFailedTests > 0 || runResult.status !== 'PASSED') {
+            (0, core_1.setFailed)(`Playwright test run failed (${numFailedTests}/${totalTests} tests failed, status: ${runResult.status}). [Dashboard](https://app.stably.ai/project/${projectId}/playwright-runs/${runId})`);
+        }
+        // Github Comment Code
+        if (githubComment && githubToken) {
+            await (0, github_comment_1.upsertGitHubCommentV2)(projectId, runId, githubToken, {
+                result: runResult
+            });
+        }
+    }
+    catch (e) {
+        (0, core_1.debug)(`API call error: ${e}`);
+        (0, core_1.setFailed)(e instanceof Error ? e.message : `An unknown error occurred`);
+    }
+}
 
 
 /***/ }),
@@ -29764,14 +29960,6 @@ module.exports = require("https");
 
 "use strict";
 module.exports = require("net");
-
-/***/ }),
-
-/***/ 27:
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("node:console");
 
 /***/ }),
 
@@ -31587,6 +31775,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
  * The entrypoint for the action.
  */
 const main_1 = __nccwpck_require__(399);
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
 (0, main_1.run)();
 
 })();
