@@ -1,4 +1,3 @@
-import { debug } from 'node:console';
 import { getInput, type InputOptions, setFailed } from '@actions/core';
 
 const NEWLINE_REGEX = /\r|\n/;

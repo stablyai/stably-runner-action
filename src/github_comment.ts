@@ -1,7 +1,7 @@
-import { context, getOctokit } from "@actions/github";
-import dedent from "ts-dedent";
-import type { ResultResponse, PlaywrightResultResponse } from "./api";
-import { getSuiteRunDashboardUrl } from "./url";
+import { context, getOctokit } from '@actions/github';
+import dedent from 'ts-dedent';
+import type { PlaywrightResultResponse, ResultResponse } from './api';
+import { getSuiteRunDashboardUrl } from './url';
 
 export async function upsertGitHubComment(
   testSuiteId: string,
@@ -10,20 +10,20 @@ export async function upsertGitHubComment(
 ) {
   const octokit = getOctokit(githubToken);
 
-  const projectId = resp.result?.projectId || "";
-  const testSuiteRunId = resp.result?.testSuiteRunId || "";
-  const testSuiteName = resp.result?.testSuiteName || "";
+  const projectId = resp.result?.projectId || '';
+  const testSuiteRunId = resp.result?.testSuiteRunId || '';
+  const testSuiteName = resp.result?.testSuiteName || '';
   const results = resp.result?.results || [];
-  const failedTests = results.filter((x) => x.status === "FAILED");
+  const failedTests = results.filter(x => x.status === 'FAILED');
   const successTests = results.filter(
-    (x) => x.status === "PASSED" || x.status === "FLAKY"
+    x => x.status === 'PASSED' || x.status === 'FLAKY'
   );
-  const undefinedTests = results.filter((x) => x.status === "ERROR");
+  const undefinedTests = results.filter(x => x.status === 'ERROR');
 
   const commentIdentiifer = `<!-- stably_${testSuiteId} -->`;
   const suiteRunDashboardUrl = getSuiteRunDashboardUrl({
     projectId,
-    testSuiteRunId,
+    testSuiteRunId
   });
 
   // prettier-ignore
@@ -64,22 +64,22 @@ export async function upsertGitHubComment(
     ? await octokit.rest.issues
         .listComments({
           ...context.repo,
-          issue_number: context.payload.pull_request.number,
+          issue_number: context.payload.pull_request.number
         })
         .catch(() => {
           return { data: [] };
         })
     : commitSha
-    ? await octokit.rest.repos
-        .listCommentsForCommit({
-          ...context.repo,
-          commit_sha: context.payload.after,
-        })
-        .catch(() => {
-          return { data: [] };
-        })
-    : { data: [] };
-  const existingCommentId = comments.find((comment) =>
+      ? await octokit.rest.repos
+          .listCommentsForCommit({
+            ...context.repo,
+            commit_sha: context.payload.after
+          })
+          .catch(() => {
+            return { data: [] };
+          })
+      : { data: [] };
+  const existingCommentId = comments.find(comment =>
     comment?.body?.startsWith(commentIdentiifer)
   )?.id;
 
@@ -89,13 +89,13 @@ export async function upsertGitHubComment(
       await octokit.rest.issues.updateComment({
         ...context.repo,
         comment_id: existingCommentId,
-        body,
+        body
       });
     } else {
       await octokit.rest.issues.createComment({
         ...context.repo,
         body,
-        issue_number: context.payload.pull_request.number,
+        issue_number: context.payload.pull_request.number
       });
     }
   } else if (commitSha) {
@@ -103,13 +103,13 @@ export async function upsertGitHubComment(
       await octokit.rest.repos.updateCommitComment({
         ...context.repo,
         comment_id: existingCommentId,
-        body,
+        body
       });
     } else {
       await octokit.rest.repos.createCommitComment({
         ...context.repo,
         body,
-        commit_sha: commitSha,
+        commit_sha: commitSha
       });
     }
   }
@@ -118,7 +118,7 @@ export async function upsertGitHubComment(
 function listTestMarkDown({
   testSuiteRunId,
   tests,
-  projectId,
+  projectId
 }: {
   testSuiteRunId: string;
   tests: {
@@ -134,7 +134,7 @@ function listTestMarkDown({
       ({ runId, testName }) =>
         `  * [${testName}](http://app.stably.ai/project/${projectId}/history/g_${testSuiteRunId}/run/${runId})`
     )
-    .join("\n");
+    .join('\n');
 }
 
 export async function upsertGitHubCommentV2(
@@ -147,9 +147,9 @@ export async function upsertGitHubCommentV2(
 
   const result = resp.result;
   const testCases = result?.results?.testCases || [];
-  const failedTests = testCases.filter((x) => x.status === "FAILED");
-  const passedTests = testCases.filter((x) => x.status === "PASSED");
-  const skippedTests = testCases.filter((x) => x.status === "SKIPPED");
+  const failedTests = testCases.filter(x => x.status === 'FAILED');
+  const passedTests = testCases.filter(x => x.status === 'PASSED');
+  const skippedTests = testCases.filter(x => x.status === 'SKIPPED');
 
   const commentIdentiifer = `<!-- stably_playwright_${projectId} -->`;
   const dashboardUrl = `https://app.stably.ai/project/${projectId}/playwright-runs/${runId}`;
@@ -192,22 +192,22 @@ export async function upsertGitHubCommentV2(
     ? await octokit.rest.issues
         .listComments({
           ...context.repo,
-          issue_number: context.payload.pull_request.number,
+          issue_number: context.payload.pull_request.number
         })
         .catch(() => {
           return { data: [] };
         })
     : commitSha
-    ? await octokit.rest.repos
-        .listCommentsForCommit({
-          ...context.repo,
-          commit_sha: commitSha,
-        })
-        .catch(() => {
-          return { data: [] };
-        })
-    : { data: [] };
-  const existingCommentId = comments.find((comment) =>
+      ? await octokit.rest.repos
+          .listCommentsForCommit({
+            ...context.repo,
+            commit_sha: commitSha
+          })
+          .catch(() => {
+            return { data: [] };
+          })
+      : { data: [] };
+  const existingCommentId = comments.find(comment =>
     comment?.body?.startsWith(commentIdentiifer)
   )?.id;
 
@@ -217,13 +217,13 @@ export async function upsertGitHubCommentV2(
       await octokit.rest.issues.updateComment({
         ...context.repo,
         comment_id: existingCommentId,
-        body,
+        body
       });
     } else {
       await octokit.rest.issues.createComment({
         ...context.repo,
         body,
-        issue_number: context.payload.pull_request.number,
+        issue_number: context.payload.pull_request.number
       });
     }
   } else if (commitSha) {
@@ -231,13 +231,13 @@ export async function upsertGitHubCommentV2(
       await octokit.rest.repos.updateCommitComment({
         ...context.repo,
         comment_id: existingCommentId,
-        body,
+        body
       });
     } else {
       await octokit.rest.repos.createCommitComment({
         ...context.repo,
         body,
-        commit_sha: commitSha,
+        commit_sha: commitSha
       });
     }
   }

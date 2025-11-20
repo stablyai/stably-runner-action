@@ -1,10 +1,10 @@
 import { debug, setFailed, setOutput } from '@actions/core';
 import { startTunnel } from '@stablyhq/runner-sdk';
 import {
-  startTestSuite,
-  waitForTestSuiteRunResult,
   startPlaywrightRun,
-  waitForPlaywrightRunResult
+  startTestSuite,
+  waitForPlaywrightRunResult,
+  waitForTestSuiteRunResult
 } from './api';
 import { fetchMetadata } from './fetch-metadata';
 import { upsertGitHubComment, upsertGitHubCommentV2 } from './github_comment';
@@ -18,8 +18,7 @@ import { getSuiteRunDashboardUrl } from './url';
 export async function run(): Promise<void> {
   try {
     const input = parseInput();
-    const { version, apiKey, githubComment, githubToken, runInAsyncMode } =
-      input;
+    const { version } = input;
 
     if (version === 'v1') {
       await runV1(input);
