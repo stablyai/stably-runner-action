@@ -1,5 +1,5 @@
-import { InputOptions, getInput, setFailed } from '@actions/core';
-import { debug } from 'console';
+import { debug } from 'node:console';
+import { getInput, type InputOptions, setFailed } from '@actions/core';
 
 const NEWLINE_REGEX = /\r|\n/;
 const TRUE_VALUES = new Set(['true', 'yes', '1']);

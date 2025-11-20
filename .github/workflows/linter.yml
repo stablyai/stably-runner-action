@@ -35,14 +35,5 @@ jobs:
         run: npm ci
 
       - name: Lint Code Base
-        id: super-linter
-        uses: super-linter/super-linter/slim@v5
-        env:
-          DEFAULT_BRANCH: main
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TYPESCRIPT_DEFAULT_STYLE: prettier
-          VALIDATE_JSCPD: false
-          VALIDATE_MARKDOWN: false
-          VALIDATE_NATURAL_LANGUAGE: false
-          VALIDATE_GITHUB_ACTIONS: false
-          FILTER_REGEX_EXCLUDE: .*dist/.*
+        id: biome-check
+        run: npm run check

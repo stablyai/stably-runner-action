@@ -1,6 +1,6 @@
 import { context, getOctokit } from '@actions/github';
 import dedent from 'ts-dedent';
-import { ResultResponse } from './api';
+import type { ResultResponse } from './api';
 import { getSuiteRunDashboardUrl } from './url';
 
 export async function upsertGitHubComment(
@@ -31,11 +31,11 @@ export async function upsertGitHubComment(
   # [Stably](https://stably.ai/) Runner - [Test Suite - '${testSuiteName}'](https://app.stably.ai/project/${projectId}/testSuite/${testSuiteId})
 
   Test Suite Run Result: ${
-    resp.error 
+    resp.error
       ? '❌ Error - The Action ran into an error while calling the Stably backend. Please re-run'
       : failedTests.length === 0
-      ? `🟢 Success (${successTests.length}/${results.length} tests passed) [[dashboard]](${suiteRunDashboardUrl})`
-      : `🔴 Failure (${failedTests.length}/${results.length} tests failed) [[dashboard]](${suiteRunDashboardUrl})`
+        ? `🟢 Success (${successTests.length}/${results.length} tests passed) [[dashboard]](${suiteRunDashboardUrl})`
+        : `🔴 Failure (${failedTests.length}/${results.length} tests failed) [[dashboard]](${suiteRunDashboardUrl})`
   }
   
 
@@ -79,8 +79,8 @@ export async function upsertGitHubComment(
             return { data: [] };
           })
       : { data: [] };
-  const existingCommentId = comments.find(
-    comment => comment?.body?.startsWith(commentIdentiifer)
+  const existingCommentId = comments.find(comment =>
+    comment?.body?.startsWith(commentIdentiifer)
   )?.id;
 
   // Create or update commit/PR comment
