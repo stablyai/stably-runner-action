@@ -159,11 +159,11 @@ export async function upsertGitHubCommentV2(
   # [Stably](https://stably.ai/) Playwright Runner - Project ${projectId}
 
   Test Run Result: ${
-    resp.error 
+    resp.error
       ? '❌ Error - The Action ran into an error while calling the Stably backend. Please re-run'
       : failedTests.length === 0 && result?.status === 'PASSED'
-      ? `🟢 Success (${passedTests.length}/${testCases.length} tests passed) [[dashboard]](${dashboardUrl})`
-      : `🔴 Failure (${failedTests.length}/${testCases.length} tests failed, status: ${result?.status}) [[dashboard]](${dashboardUrl})`
+        ? `🟢 Success (${passedTests.length}/${testCases.length} tests passed) [[dashboard]](${dashboardUrl})`
+        : `🔴 Failure (${failedTests.length}/${testCases.length} tests failed, status: ${result?.status}) [[dashboard]](${dashboardUrl})`
   }
   
 
@@ -201,7 +201,7 @@ export async function upsertGitHubCommentV2(
     ? await octokit.rest.repos
         .listCommentsForCommit({
           ...context.repo,
-          commit_sha: context.payload.after,
+          commit_sha: commitSha,
         })
         .catch(() => {
           return { data: [] };
