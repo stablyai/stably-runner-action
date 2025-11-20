@@ -29488,8 +29488,8 @@ function listTestMarkDown({ testSuiteRunId, tests, projectId }) {
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.parseInput = void 0;
+const node_console_1 = __nccwpck_require__(27);
 const core_1 = __nccwpck_require__(2186);
-const console_1 = __nccwpck_require__(6206);
 const NEWLINE_REGEX = /\r|\n/;
 const TRUE_VALUES = new Set(['true', 'yes', '1']);
 function getBoolInput(name, options) {
@@ -29506,10 +29506,10 @@ function parseInput() {
     const testGroupIdInput = (0, core_1.getInput)('test-group-id');
     const testSuiteId = testSuiteIdInput || testGroupIdInput || runGroupIdsInput.at(0);
     if (!testSuiteId) {
-        (0, console_1.debug)(`testGroupId: ${testSuiteId}`);
-        (0, console_1.debug)(`testSuiteId: ${testSuiteIdInput}`);
-        (0, console_1.debug)(`runGroupIdsInput: ${runGroupIdsInput}`);
-        (0, console_1.debug)(`testGroupIdInput: ${testGroupIdInput}`);
+        (0, node_console_1.debug)(`testGroupId: ${testSuiteId}`);
+        (0, node_console_1.debug)(`testSuiteId: ${testSuiteIdInput}`);
+        (0, node_console_1.debug)(`runGroupIdsInput: ${runGroupIdsInput}`);
+        (0, node_console_1.debug)(`testGroupIdInput: ${testGroupIdInput}`);
         (0, core_1.setFailed)('the `testGroupId` input is required');
         throw Error('the `testGroupId` input is required');
     }
@@ -29764,6 +29764,14 @@ module.exports = require("https");
 
 "use strict";
 module.exports = require("net");
+
+/***/ }),
+
+/***/ 27:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("node:console");
 
 /***/ }),
 
@@ -31579,7 +31587,6 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
  * The entrypoint for the action.
  */
 const main_1 = __nccwpck_require__(399);
-// eslint-disable-next-line @typescript-eslint/no-floating-promises
 (0, main_1.run)();
 
 })();

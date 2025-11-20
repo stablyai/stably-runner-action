@@ -1,7 +1,7 @@
 import { debug } from '@actions/core';
 import { HttpClient } from '@actions/http-client';
 import { BearerCredentialHandler } from '@actions/http-client/lib/auth';
-import { GithubMetadata } from './fetch-metadata';
+import type { GithubMetadata } from './fetch-metadata';
 
 export type TestStatus =
   | 'PASSED'

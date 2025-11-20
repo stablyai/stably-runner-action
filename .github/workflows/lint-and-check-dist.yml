@@ -41,6 +41,10 @@ jobs:
         id: install
         run: npm ci
 
+      - name: Lint Code Base
+        id: biome-check
+        run: npm run check
+
       - name: Build dist/ Directory
         id: build
         run: npm run bundle

@@ -1,0 +1,6 @@
+# Biome ignore file
+# Add files or directories that should be completely ignored by Biome
+
+# Already handled by VCS integration (.gitignore)
+# but you can add additional patterns here if needed
+
