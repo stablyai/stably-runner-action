@@ -121,7 +121,7 @@ async function runV2(input: ReturnType<typeof parseInput>): Promise<void> {
     githubComment,
     githubToken,
     runInAsyncMode,
-    variableOverrides
+    envOverrides
   } = input;
 
   if (!projectId) {
@@ -133,7 +133,7 @@ async function runV2(input: ReturnType<typeof parseInput>): Promise<void> {
     apiKey,
     options: {
       runGroupNames,
-      variableOverrides
+      envOverrides
     }
   });
   setOutput('testSuiteRunId', runId);

@@ -17,6 +17,10 @@ export function parseInput() {
   // V2 inputs
   const projectId = getInput('project-id');
   const runGroupNames = getList('run-group-names').filter(Boolean);
+  const envOverridesJson = getInput('env-overrides');
+  const envOverrides = envOverridesJson
+    ? parseObjectInput('env-overrides', envOverridesJson)
+    : undefined;
 
   // V1 inputs (supporting deprecating of runGroupIds)
   const testSuiteIdInput = getInput('test-suite-id');
@@ -91,16 +95,17 @@ export function parseInput() {
     // V1 fields
     testSuiteId,
     urlReplacement,
+    environment,
+    variableOverrides,
+    note,
     // V2 fields
     projectId,
     runGroupNames: runGroupNames.length > 0 ? runGroupNames : undefined,
+    envOverrides,
     // Shared fields
     githubToken: githubToken || process.env.GITHUB_TOKEN,
     githubComment,
-    runInAsyncMode,
-    environment,
-    variableOverrides,
-    note
+    runInAsyncMode
   };
 }
 

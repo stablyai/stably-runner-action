@@ -17,10 +17,10 @@ Run Playwright tests from your repository using Stably's agent-based runner.
 | api-key            | ✅           |                       | Your API key                                                                                                                                                                                                                                                                                       |
 | project-id         | ✅           |                       | Your project ID                                                                                                                                                                                                                                                                                    |
 | run-group-names    |              |                       | Newline-separated list of Playwright project names to run. Optional - if not provided, all projects will run.                                                                                                                                                                                      |
+| env-overrides      |              |                       | A JSON object containing environment variable overrides. Each key is a variable name and the value is a string.                                                                                                                                                                                   |
 | github-comment     |              | true                  | When enabled, will leave a comment on either the commit or PR with relevant test results. Requires proper permissions (see [Permissions](#permissions) section below).                                                                                                                                            |
 | github-token       |              | `${{ github.token }}` | This token is used for leaving the comments on PRs/commits. By default, we'll use the GitHub actions bot token, but you can override this a repository scoped [PAT](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens). |
 | async              |              | false                 | If set, will launch the tests but not wait for them to finish and the action will always output success. Note: Github comments will not function if this is set                                                                                                                                    |
-| variable-overrides |              |                       | A JSON object containing variable overrides. Each key is a variable name and the value can be either a string or an object with `value` and optional `sensitive` properties.                                                                                                                       |
 
 ### Outputs
 
@@ -64,7 +64,7 @@ jobs:
             chromium
             firefox
           # Optional: override environment variables
-          variable-overrides: |
+          env-overrides: |
             {
               "BASE_URL": "https://staging.example.com"
             }
@@ -76,7 +76,7 @@ jobs:
 
 ### Testing Containerized/Local Applications
 
-You can use the `variable-overrides` option to enable containerized/local testing by replacing the original URL with a localhost URL:
+You can use the `env-overrides` option to enable containerized/local testing by replacing the original URL with a localhost URL:
 
 ```yaml
 - name: Stably Playwright Runner Action (v2)
@@ -85,7 +85,7 @@ You can use the `variable-overrides` option to enable containerized/local testin
   with:
     api-key: ${{ secrets.API_KEY }}
     project-id: YOUR_PROJECT_ID
-    variable-overrides: |
+    env-overrides: |
       {
         "BASE_URL": "http://localhost:3000"
       }

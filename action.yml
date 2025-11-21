@@ -15,6 +15,10 @@ inputs:
     description: |-
       Newline-separated list of Playwright project names to run (v2 only).
       Optional - if not provided, all projects will run.
+  env-overrides:
+    description: |-
+      A JSON object containing environment variable overrides for v2 Playwright Runner.
+      Each key is a variable name and the value is a string.
   run-group-ids:
     description: |-
       Newline separated list of run group IDs.

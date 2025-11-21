@@ -198,10 +198,7 @@ export async function startPlaywrightRun({
   apiKey: string;
   options: {
     runGroupNames?: string[];
-    variableOverrides?: Record<
-      string,
-      string | { value: string | object; sensitive?: boolean }
-    >;
+    envOverrides?: Record<string, string>;
   };
 }): Promise<PlaywrightRunResponse> {
   const httpClient = new HttpClient('github-action', [
@@ -210,7 +207,7 @@ export async function startPlaywrightRun({
 
   const body = {
     runGroupName: options.runGroupNames,
-    variableOverrides: options.variableOverrides
+    envOverrides: options.envOverrides
   };
 
   const runUrl = new URL(`/v1/projects/${projectId}/runs`, API_ENDPOINT).href;
