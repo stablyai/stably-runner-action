@@ -72,7 +72,9 @@ jobs:
         uses: ./
         with:
           api-key: ${{ secrets.API_KEY }}
-          project-id: ${{ secrets.PROJECT_ID }}
+          project-id: clle9fscu0000jf087maicxbc
+          run-group-names: |
+            CI TESTS
 
       - name: Print Output
         id: output
