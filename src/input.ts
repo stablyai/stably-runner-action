@@ -1,4 +1,3 @@
-import { debug } from 'node:console';
 import { getInput, type InputOptions, setFailed } from '@actions/core';
 
 const NEWLINE_REGEX = /\r|\n/;
@@ -15,20 +14,39 @@ function getList(name: string, options?: InputOptions) {
 export function parseInput() {
   const apiKey = getInput('api-key', { required: true });
 
-  // Supporting deprecating of runGroupIds
+  // V2 inputs
+  const projectId = getInput('project-id');
+  const runGroupNames = getList('run-group-names').filter(Boolean);
+  const envOverridesJson = getInput('env-overrides');
+  const envOverrides = envOverridesJson
+    ? parseObjectInput('env-overrides', envOverridesJson)
+    : undefined;
+
+  // V1 inputs (supporting deprecating of runGroupIds)
   const testSuiteIdInput = getInput('test-suite-id');
-  const runGroupIdsInput = getList('run-group-ids');
   const testGroupIdInput = getInput('test-group-id');
-  const testSuiteId =
-    testSuiteIdInput || testGroupIdInput || runGroupIdsInput.at(0);
-  if (!testSuiteId) {
-    debug(`testGroupId: ${testSuiteId}`);
-    debug(`testSuiteId: ${testSuiteIdInput}`);
-    debug(`runGroupIdsInput: ${runGroupIdsInput}`);
-    debug(`testGroupIdInput: ${testGroupIdInput}`);
-    setFailed('the `testGroupId` input is required');
-    throw Error('the `testGroupId` input is required');
+  const testSuiteId = testSuiteIdInput || testGroupIdInput;
+
+  // Validation: require either projectId (v2) OR testSuiteId (v1), but not both
+  if (projectId && testSuiteId) {
+    setFailed(
+      'Cannot use both project-id (v2) and test-suite-id (v1). Please use one or the other.'
+    );
+    throw Error(
+      'Cannot use both project-id (v2) and test-suite-id (v1). Please use one or the other.'
+    );
   }
+
+  if (!projectId && !testSuiteId) {
+    setFailed(
+      'Either project-id (v2) or test-suite-id (v1) is required. Please provide one.'
+    );
+    throw Error(
+      'Either project-id (v2) or test-suite-id (v1) is required. Please provide one.'
+    );
+  }
+
+  const version = projectId ? 'v2' : 'v1';
 
   // @deprecated
   const deprecatedRawUrlReplacementInput = getList('domain-override');
@@ -70,15 +88,22 @@ export function parseInput() {
   const note = getInput('note');
 
   return {
+    version,
     apiKey,
+    // V1 fields
     testSuiteId,
     urlReplacement,
-    githubToken: githubToken || process.env.GITHUB_TOKEN,
-    githubComment,
-    runInAsyncMode,
     environment,
     variableOverrides,
-    note
+    note,
+    // V2 fields
+    projectId,
+    runGroupNames: runGroupNames.length > 0 ? runGroupNames : undefined,
+    envOverrides,
+    // Shared fields
+    githubToken: githubToken || process.env.GITHUB_TOKEN,
+    githubComment,
+    runInAsyncMode
   };
 }
 
