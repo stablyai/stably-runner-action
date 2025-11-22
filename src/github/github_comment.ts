@@ -1,7 +1,8 @@
 import { context, getOctokit } from '@actions/github';
 import dedent from 'ts-dedent';
-import type { PlaywrightResultResponse, ResultResponse } from './api';
-import { getSuiteRunDashboardUrl } from './url';
+import type { ResultResponse } from '../stably/api/agent-api';
+import type { PlaywrightResultResponse } from '../stably/api/playwright-api';
+import { getSuiteRunDashboardUrl } from '../stably/url';
 
 export async function upsertGitHubComment(
   testSuiteId: string,
@@ -28,7 +29,7 @@ export async function upsertGitHubComment(
 
   // prettier-ignore
   const body = dedent`${commentIdentiifer}
-  # [Stably](https://stably.ai/) Runner - [Test Suite - '${testSuiteName}'](https://app.stably.ai/project/${projectId}/testSuite/${testSuiteId})
+  # Stably Runner - [Test Suite - '${testSuiteName}'](https://app.stably.ai/project/${projectId}/testSuite/${testSuiteId})
 
   Test Suite Run Result: ${
     resp.error
@@ -141,7 +142,8 @@ export async function upsertGitHubCommentV2(
   projectId: string,
   runId: string,
   githubToken: string,
-  resp: { result?: PlaywrightResultResponse; error?: boolean }
+  resp: { result?: PlaywrightResultResponse; error?: boolean },
+  runGroupNames?: string[]
 ) {
   const octokit = getOctokit(githubToken);
 
@@ -156,7 +158,7 @@ export async function upsertGitHubCommentV2(
 
   // prettier-ignore
   const body = dedent`${commentIdentiifer}
-  # [Stably](https://stably.ai/) Playwright Runner - Project ${projectId}
+  # Stably Runner${runGroupNames?.length === 1 ? ` - Run Group '${runGroupNames[0]}'` : ''}
 
   Test Run Result: ${
     resp.error

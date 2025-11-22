@@ -1,15 +1,20 @@
 import { debug, setFailed, setOutput } from '@actions/core';
 import { startTunnel } from '@stablyhq/runner-sdk';
+import { fetchMetadata } from './github/fetch-metadata';
+import {
+  upsertGitHubComment,
+  upsertGitHubCommentV2
+} from './github/github_comment';
+import { parseInput } from './input';
+import {
+  startTestSuite,
+  waitForTestSuiteRunResult
+} from './stably/api/agent-api';
 import {
   startPlaywrightRun,
-  startTestSuite,
-  waitForPlaywrightRunResult,
-  waitForTestSuiteRunResult
-} from './api';
-import { fetchMetadata } from './fetch-metadata';
-import { upsertGitHubComment, upsertGitHubCommentV2 } from './github_comment';
-import { parseInput } from './input';
-import { getSuiteRunDashboardUrl } from './url';
+  waitForPlaywrightRunResult
+} from './stably/api/playwright-api';
+import { getSuiteRunDashboardUrl } from './stably/url';
 
 /**
  * The main function for the action.
@@ -164,9 +169,15 @@ async function runV2(input: ReturnType<typeof parseInput>): Promise<void> {
 
     // Github Comment Code
     if (githubComment && githubToken) {
-      await upsertGitHubCommentV2(projectId, runId, githubToken, {
-        result: runResult
-      });
+      await upsertGitHubCommentV2(
+        projectId,
+        runId,
+        githubToken,
+        {
+          result: runResult
+        },
+        runGroupNames
+      );
     }
   } catch (e) {
     debug(`API call error: ${e}`);

@@ -24,10 +24,8 @@ export function parseInput() {
 
   // V1 inputs (supporting deprecating of runGroupIds)
   const testSuiteIdInput = getInput('test-suite-id');
-  const runGroupIdsInput = getList('run-group-ids');
   const testGroupIdInput = getInput('test-group-id');
-  const testSuiteId =
-    testSuiteIdInput || testGroupIdInput || runGroupIdsInput.at(0);
+  const testSuiteId = testSuiteIdInput || testGroupIdInput;
 
   // Validation: require either projectId (v2) OR testSuiteId (v1), but not both
   if (projectId && testSuiteId) {

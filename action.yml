@@ -9,7 +9,7 @@ inputs:
     required: true
   project-id:
     description: |-
-      The project ID to execute (v2 Playwright Runner).
+      The project ID to execute (v2 only).
       Use this OR test-suite-id, not both.
   run-group-names:
     description: |-
@@ -17,32 +17,25 @@ inputs:
       Optional - if not provided, all projects will run.
   env-overrides:
     description: |-
-      A JSON object containing environment variable overrides for v2 Playwright Runner.
+      A JSON object containing environment variable overrides (v2 only).
       Each key is a variable name and the value is a string.
-  run-group-ids:
-    description: |-
-      Newline separated list of run group IDs.
-      Use to run a subset of tests.
-    deprecationMessage:
-      'Only a single run-group-id is supported. Prefer the use test-group-id
-      instead.'
   test-group-id:
-    description: The test group ID to execute
+    description: The test group ID to execute (v1 only)
     deprecationMessage:
       'We renamed test groups to test suites. Use test-suite-id instead.'
   test-suite-id:
     description: |-
-      The test suite ID to execute (v1 Test Suite Runner).
+      The test suite ID to execute (v1 only).
       Use this OR project-id, not both.
   domain-override:
     description: |-
-      Newline-separated tuple (pair) with original first as first line and the replacement second.
+      Newline-separated tuple (pair) with original first as first line and the replacement second (v1 only).
       Use to replace website URLs when running tests
     deprecationMessage:
       'This input is deprecated. Please use the url-replacement input instead.'
   url-replacement:
     description: |-
-      Newline-separated tuple (pair) with original first as first line and the replacement second.
+      Newline-separated tuple (pair) with original first as first line and the replacement second (v1 only).
       Use to replace website URLs when running tests
     deprecationMessage:
       'URL replacement is deprecated. Please use environment variables instead.'
@@ -63,18 +56,18 @@ inputs:
     default: 'false'
   environment:
     description: |-
-      The environment to inherit variables from.
+      The environment to inherit variables from (v1 only, v2 support soon).
       Defaults to 'PRODUCTION'.
     default: 'PRODUCTION'
   variable-overrides:
     description: |-
-      A JSON object of variable overrides to pass to the tests.
+      A JSON object of variable overrides to pass to the tests (v1 only).
       The key is the variable name and the value is the value to override it with.
       The value can be a string or an object with a 'value' property and an optional 'sensitive' property.
     default: '{}'
   note:
     description: |-
-      Optional note to add to the test run to help identify it.
+      Optional note to add to the test run to help identify it (v1 only).
       This note will be included in the test run metadata.
 
 # Define your outputs here.
@@ -82,10 +75,12 @@ outputs:
   success:
     description: 'Bool if run was successful'
   testSuiteRunId:
-    description: 'The test suite run ID (v1) or run ID (v2)'
+    description: 'The resulting test-suite-run-id (v1 only)'
+  runId:
+    description: 'The resulting run-id (v2 only)'
 
 runs:
-  using: node20
+  using: node24
   main: dist/index.js
 
 branding:
