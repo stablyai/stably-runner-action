@@ -152,7 +152,7 @@ export async function upsertGitHubCommentV2(
   const skippedTests = testCases.filter(x => x.status === 'SKIPPED');
 
   const commentIdentiifer = `<!-- stably_playwright_${projectId} -->`;
-  const dashboardUrl = `https://app.stably.ai/project/${projectId}/playwright-runs/${runId}`;
+  const dashboardUrl = `https://app.stably.ai/project/${projectId}/playwright/history/${runId}?tab=specs`;
 
   // prettier-ignore
   const body = dedent`${commentIdentiifer}

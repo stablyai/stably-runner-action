@@ -33,6 +33,7 @@ type PlaywrightRunResponse = {
 };
 
 type PlaywrightRunStatus =
+  | 'QUEUED'
   | 'RUNNING'
   | 'PASSED'
   | 'FAILED'
@@ -255,7 +256,7 @@ export async function waitForPlaywrightRunResult({
       await httpClient.getJson<PlaywrightResultResponse>(statusUrl);
     const runStatus = unpackOrThrow(runStatusResponse, 'playwrightRunStatus');
 
-    if (runStatus.status !== 'RUNNING') {
+    if (runStatus.status !== 'RUNNING' && runStatus.status !== 'QUEUED') {
       return runStatus; // Return the full result when finished
     }
 
