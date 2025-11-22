@@ -29335,7 +29335,7 @@ async function startPlaywrightRun({ projectId, apiKey, options }) {
     ]);
     const body = {
         runGroupName: options.runGroupNames,
-        variableOverrides: options.variableOverrides
+        envOverrides: options.envOverrides
     };
     const runUrl = new URL(`/v1/projects/${projectId}/runs`, API_ENDPOINT).href;
     const runResponse = await httpClient.postJson(runUrl, body, {
@@ -29359,7 +29359,7 @@ async function waitForPlaywrightRunResult({ projectId, runId, apiKey }) {
         }
         const runStatusResponse = await httpClient.getJson(statusUrl);
         const runStatus = unpackOrThrow(runStatusResponse, 'playwrightRunStatus');
-        if (runStatus.status !== 'RUNNING') {
+        if (runStatus.status !== 'RUNNING' && runStatus.status !== 'QUEUED') {
             return runStatus; // Return the full result when finished
         }
         // Wait for 5 seconds before polling again
@@ -29525,7 +29525,7 @@ async function upsertGitHubCommentV2(projectId, runId, githubToken, resp) {
     const passedTests = testCases.filter(x => x.status === 'PASSED');
     const skippedTests = testCases.filter(x => x.status === 'SKIPPED');
     const commentIdentiifer = `<!-- stably_playwright_${projectId} -->`;
-    const dashboardUrl = `https://app.stably.ai/project/${projectId}/playwright-runs/${runId}`;
+    const dashboardUrl = `https://app.stably.ai/project/${projectId}/playwright/history/${runId}?tab=specs`;
     // prettier-ignore
     const body = (0, ts_dedent_1.default) `${commentIdentiifer}
   # [Stably](https://stably.ai/) Playwright Runner - Project ${projectId}
@@ -29633,6 +29633,10 @@ function parseInput() {
     // V2 inputs
     const projectId = (0, core_1.getInput)('project-id');
     const runGroupNames = getList('run-group-names').filter(Boolean);
+    const envOverridesJson = (0, core_1.getInput)('env-overrides');
+    const envOverrides = envOverridesJson
+        ? parseObjectInput('env-overrides', envOverridesJson)
+        : undefined;
     // V1 inputs (supporting deprecating of runGroupIds)
     const testSuiteIdInput = (0, core_1.getInput)('test-suite-id');
     const runGroupIdsInput = getList('run-group-ids');
@@ -29678,16 +29682,17 @@ function parseInput() {
         // V1 fields
         testSuiteId,
         urlReplacement,
+        environment,
+        variableOverrides,
+        note,
         // V2 fields
         projectId,
         runGroupNames: runGroupNames.length > 0 ? runGroupNames : undefined,
+        envOverrides,
         // Shared fields
         githubToken: githubToken || process.env.GITHUB_TOKEN,
         githubComment,
-        runInAsyncMode,
-        environment,
-        variableOverrides,
-        note
+        runInAsyncMode
     };
 }
 exports.parseInput = parseInput;
@@ -29801,7 +29806,7 @@ async function runV1(input) {
     }
 }
 async function runV2(input) {
-    const { apiKey, projectId, runGroupNames, githubComment, githubToken, runInAsyncMode, variableOverrides } = input;
+    const { apiKey, projectId, runGroupNames, githubComment, githubToken, runInAsyncMode, envOverrides } = input;
     if (!projectId) {
         throw new Error('projectId is required for v2');
     }
@@ -29810,7 +29815,7 @@ async function runV2(input) {
         apiKey,
         options: {
             runGroupNames,
-            variableOverrides
+            envOverrides
         }
     });
     (0, core_1.setOutput)('testSuiteRunId', runId);
