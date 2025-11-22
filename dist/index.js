@@ -31245,11 +31245,11 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.run = run;
 const core_1 = __nccwpck_require__(9999);
 const runner_sdk_1 = __nccwpck_require__(9374);
-const agent_api_1 = __nccwpck_require__(7917);
-const playwright_api_1 = __nccwpck_require__(9018);
 const fetch_metadata_1 = __nccwpck_require__(5859);
 const github_comment_1 = __nccwpck_require__(7380);
 const input_1 = __nccwpck_require__(5229);
+const agent_api_1 = __nccwpck_require__(7917);
+const playwright_api_1 = __nccwpck_require__(9018);
 const url_1 = __nccwpck_require__(4264);
 /**
  * The main function for the action.
