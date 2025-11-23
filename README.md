@@ -18,7 +18,7 @@ Run test suites using Stably's agent (v2) test runner.
 | api-key            | ✅           |                       | Your API key                                                                                                                                                                                                                                                                                       |
 | project-id         | ✅           |                       | Your Stably project ID                                                                                                                                                                                                                                                                             |
 | run-group-name     |              |                       | The run group you wish to run - if not provided, all tests will run                                                                                                                                                                                                                               |
-| env-overrides      |              |                       | A JSON object containing environment variable overrides. Each key is a variable name and the value is a string.                                                                                                                                                                                    |
+| env-overrides      |              |                       | A YAML string or JSON object containing environment variable overrides. Each key is a variable name and the value is a string.                                                                                                                                                                                    |
 | github-comment     |              | true                  | When enabled, will leave a comment on either the commit or PR with relevant test results. Requires proper permissions (see [Permissions](#permissions) section below).                                                                                                                             |               |
 | github-token       |              | `${{ github.token }}` | This token is used for leaving the comments on PRs/commits. By default, we'll use the GitHub actions bot token, but you can override this a repository scoped [PAT](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens).          |
 | async              |              | false                 | If set, will launch the tests but not wait for them to finish and the action will always output success. Note: Github comments will not function if this is set                                                                                                                                    |
@@ -64,9 +64,8 @@ jobs:
           run-group-name: smoke-tests
           # Optional: override environment variables
           env-overrides: |
-            {
-              "BASE_URL": "https://staging.example.com"
-            }
+            BASE_URL: https://staging.example.com
+            API_KEY: abc123
 
       - name: Print Output
         id: output
@@ -85,9 +84,7 @@ You can use the `env-overrides` option to enable containerized/local testing by 
     api-key: ${{ secrets.API_KEY }}
     project-id: YOUR_PROJECT_ID
     env-overrides: |
-      {
-        "BASE_URL": "http://localhost:3000"
-      }
+      BASE_URL: http://localhost:3000
 ```
 
 ## Classic (v1)
