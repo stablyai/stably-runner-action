@@ -2,6 +2,7 @@
 
 Use this GitHub action to run tests on [stably.ai](https://stably.ai)
 
+> [!IMPORTANT]  
 > 🔐 **Permission Issues?** If you encounter permission errors, see the [Permissions](#permissions) section below.
 
 This action supports two versions: [Agents (v2)](#agents-v2) for Playwright tests or [Classic (v1)](#classic-v1) for test suites. The action automatically detects which version to use based on the inputs you provide.
