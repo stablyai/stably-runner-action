@@ -50,10 +50,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        id: checkout
-        uses: actions/checkout@v4
-
       - name: Stably Playwright Runner Action (v2)
         id: stably-runner
         uses: stablyai/stably-runner-action@v3
@@ -132,10 +128,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        id: checkout
-        uses: actions/checkout@v4
-
       - name: Stably Runner Action (v1)
         id: stably-runner
         uses: stablyai/stably-runner-action@v3
