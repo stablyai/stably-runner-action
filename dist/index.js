@@ -36088,31 +36088,29 @@ function parseInput() {
         ? parseObjectInput('variable-overrides', variableOverridesJson)
         : {};
     const note = (0, core_1.getInput)('note');
-    if (projectId) {
-        return {
-            apiKey,
-            githubToken: githubToken || process.env.GITHUB_TOKEN,
-            githubComment,
-            runInAsyncMode,
-            version: 'v2',
-            projectId,
-            runGroupName: runGroupName || undefined,
-            envOverrides
-        };
-    }
     return {
         apiKey,
         githubToken: githubToken || process.env.GITHUB_TOKEN,
         githubComment,
         runInAsyncMode,
-        version: 'v1',
-        testSuiteId,
-        urlReplacement,
-        environment,
-        variableOverrides,
-        note
+        ...(projectId
+            ? {
+                version: 'v2',
+                projectId,
+                runGroupName: runGroupName || undefined,
+                envOverrides
+            }
+            : {
+                version: 'v1',
+                testSuiteId,
+                urlReplacement,
+                environment,
+                variableOverrides,
+                note
+            })
     };
 }
+// This method also works with JSON as JSON is is valid YAML
 function parseObjectInput(fieldName, yaml) {
     try {
         const result = (0, js_yaml_1.load)(yaml);
