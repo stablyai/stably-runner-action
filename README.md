@@ -5,22 +5,22 @@ Use this GitHub action to run tests on [stably.ai](https://stably.ai)
 > [!IMPORTANT]  
 > 🔐 **Permission Issues?** If you encounter permission errors, see the [Permissions](#permissions) section below.
 
-This action supports two versions: [Agents (v2)](#agents-v2) for Playwright tests or [Classic (v1)](#classic-v1) for test suites. The action automatically detects which version to use based on the inputs you provide.
+This action supports two versions: [Agents (v2)](#agents-v2) or [Classic (v1)](#classic-v1). The action automatically detects which version to use based on the inputs you provide.
 
 ## Agents (v2)
 
-Run Playwright tests from your repository using Stably's agent-based runner.
+Run test suites using Stably's agent (v2) test runner.
 
 ### Inputs
 
 | **Name**           | **Required** | **Default**           | **Description**                                                                                                                                                                                                                                                                                    |
 | ------------------ | ------------ | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | api-key            | ✅           |                       | Your API key                                                                                                                                                                                                                                                                                       |
-| project-id         | ✅           |                       | Your project ID                                                                                                                                                                                                                                                                                    |
-| run-group-name     |              |                       | The Playwright project name to run. Optional - if not provided, all projects will run.                                                                                                                                                                                                             |
-| env-overrides      |              |                       | A JSON object containing environment variable overrides. Each key is a variable name and the value is a string.                                                                                                                                                                                   |
-| github-comment     |              | true                  | When enabled, will leave a comment on either the commit or PR with relevant test results. Requires proper permissions (see [Permissions](#permissions) section below).                                                                                                                                            |
-| github-token       |              | `${{ github.token }}` | This token is used for leaving the comments on PRs/commits. By default, we'll use the GitHub actions bot token, but you can override this a repository scoped [PAT](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens). |
+| project-id         | ✅           |                       | Your Stably project ID                                                                                                                                                                                                                                                                             |
+| run-group-name     |              |                       | The run group you wish to run - if not provided, all tests will run                                                                                                                                                                                                                               |
+| env-overrides      |              |                       | A JSON object containing environment variable overrides. Each key is a variable name and the value is a string.                                                                                                                                                                                    |
+| github-comment     |              | true                  | When enabled, will leave a comment on either the commit or PR with relevant test results. Requires proper permissions (see [Permissions](#permissions) section below).                                                                                                                             |               |
+| github-token       |              | `${{ github.token }}` | This token is used for leaving the comments on PRs/commits. By default, we'll use the GitHub actions bot token, but you can override this a repository scoped [PAT](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens).          |
 | async              |              | false                 | If set, will launch the tests but not wait for them to finish and the action will always output success. Note: Github comments will not function if this is set                                                                                                                                    |
 
 ### Outputs
