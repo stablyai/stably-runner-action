@@ -1,7 +1,8 @@
 import { context, getOctokit } from '@actions/github';
 import dedent from 'ts-dedent';
-import type { ResultResponse } from './api';
-import { getSuiteRunDashboardUrl } from './url';
+import type { ResultResponse } from '../stably/api/agent-api';
+import type { PlaywrightResultResponse } from '../stably/api/playwright-api';
+import { getSuiteRunDashboardUrl } from '../stably/url';
 
 export async function upsertGitHubComment(
   testSuiteId: string,
@@ -28,7 +29,7 @@ export async function upsertGitHubComment(
 
   // prettier-ignore
   const body = dedent`${commentIdentiifer}
-  # [Stably](https://stably.ai/) Runner - [Test Suite - '${testSuiteName}'](https://app.stably.ai/project/${projectId}/testSuite/${testSuiteId})
+  # Stably Runner - [Test Suite - '${testSuiteName}'](https://app.stably.ai/project/${projectId}/testSuite/${testSuiteId})
 
   Test Suite Run Result: ${
     resp.error
@@ -135,4 +136,111 @@ function listTestMarkDown({
         `  * [${testName}](http://app.stably.ai/project/${projectId}/history/g_${testSuiteRunId}/run/${runId})`
     )
     .join('\n');
+}
+
+export async function upsertGitHubCommentV2(
+  projectId: string,
+  runId: string,
+  githubToken: string,
+  resp: { result?: PlaywrightResultResponse; error?: boolean },
+  runGroupName?: string
+) {
+  const octokit = getOctokit(githubToken);
+
+  const result = resp.result;
+  const testCases = result?.results?.testCases || [];
+  const failedTests = testCases.filter(x => x.status === 'FAILED');
+  const passedTests = testCases.filter(x => x.status === 'PASSED');
+  const skippedTests = testCases.filter(x => x.status === 'SKIPPED');
+
+  const commentIdentiifer = `<!-- stably_playwright_${projectId} -->`;
+  const dashboardUrl = `https://app.stably.ai/project/${projectId}/playwright/history/${runId}?tab=specs`;
+
+  // prettier-ignore
+  const body = dedent`${commentIdentiifer}
+  # Stably Runner${runGroupName ? ` - [Run Group '${runGroupName}'](https://app.stably.ai/project/${projectId}/run-groups/${encodeURIComponent(runGroupName)})` : ''}
+
+  Test Run Result: ${
+    resp.error
+      ? '❌ Error - The Action ran into an error while calling the Stably backend. Please re-run'
+      : failedTests.length === 0 && result?.status === 'PASSED'
+        ? `🟢 Success (${passedTests.length}/${testCases.length} tests passed) [[dashboard]](${dashboardUrl})`
+        : `🔴 Failure (${failedTests.length}/${testCases.length} tests failed, status: ${result?.status}) [[dashboard]](${dashboardUrl})`
+  }
+  
+
+  ${
+    failedTests.length > 0
+      ? dedent`Failed Tests:
+      ${failedTests.map(t => `  * ${t.title} (${t.durationMs ? `${t.durationMs}ms` : 'N/A'})`).join('\n')}`
+      : ''
+  }
+
+  ${
+    skippedTests.length > 0
+      ? dedent`Skipped Tests:
+      ${skippedTests.map(t => `  * ${t.title}`).join('\n')}`
+      : ''
+  }
+  
+  
+  ---
+  _This comment was generated from [stably-runner-action](https://github.com/marketplace/actions/stably-runner)_
+`;
+
+  // Check if existing comment exists
+  const commitSha = context.payload.after || context.sha;
+  const { data: comments } = context.payload.pull_request
+    ? await octokit.rest.issues
+        .listComments({
+          ...context.repo,
+          issue_number: context.payload.pull_request.number
+        })
+        .catch(() => {
+          return { data: [] };
+        })
+    : commitSha
+      ? await octokit.rest.repos
+          .listCommentsForCommit({
+            ...context.repo,
+            commit_sha: commitSha
+          })
+          .catch(() => {
+            return { data: [] };
+          })
+      : { data: [] };
+  const existingCommentId = comments.find(comment =>
+    comment?.body?.startsWith(commentIdentiifer)
+  )?.id;
+
+  // Create or update commit/PR comment
+  if (context.payload.pull_request) {
+    if (existingCommentId) {
+      await octokit.rest.issues.updateComment({
+        ...context.repo,
+        comment_id: existingCommentId,
+        body
+      });
+    } else {
+      await octokit.rest.issues.createComment({
+        ...context.repo,
+        body,
+        issue_number: context.payload.pull_request.number
+      });
+    }
+  } else if (commitSha) {
+    if (existingCommentId) {
+      await octokit.rest.repos.updateCommitComment({
+        ...context.repo,
+        comment_id: existingCommentId,
+        body
+      });
+    } else {
+      await octokit.rest.repos.createCommitComment({
+        ...context.repo,
+        body,
+        commit_sha: commitSha
+      });
+    }
+  }
 }

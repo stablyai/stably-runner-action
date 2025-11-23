@@ -1,4 +1,3 @@
-import { debug } from 'node:console';
 import { getInput, type InputOptions, setFailed } from '@actions/core';
 
 const NEWLINE_REGEX = /\r|\n/;
@@ -12,22 +11,72 @@ function getList(name: string, options?: InputOptions) {
   return getInput(name, options).split(NEWLINE_REGEX).filter(Boolean);
 }
 
-export function parseInput() {
+type BaseInput = {
+  apiKey: string;
+  githubToken: string | undefined;
+  githubComment: boolean;
+  runInAsyncMode: boolean;
+};
+
+type V2Input = BaseInput & {
+  version: 'v2';
+  projectId: string;
+  runGroupName: string | undefined;
+  envOverrides: Record<string, string> | undefined;
+};
+
+type V1Input = BaseInput & {
+  version: 'v1';
+  testSuiteId: string;
+  urlReplacement:
+    | {
+        original: string;
+        replacement: string;
+      }
+    | undefined;
+  environment: string;
+  variableOverrides: Record<
+    string,
+    string | { value: string | object; sensitive?: boolean }
+  >;
+  note: string;
+};
+
+export type ParsedInput = V1Input | V2Input;
+
+export function parseInput(): ParsedInput {
   const apiKey = getInput('api-key', { required: true });
 
-  // Supporting deprecating of runGroupIds
+  // V2 inputs
+  const projectId = getInput('project-id');
+  const runGroupName = getInput('run-group-name').trim();
+  const envOverridesJson = getInput('env-overrides');
+  const envOverrides = envOverridesJson
+    ? parseObjectInput('env-overrides', envOverridesJson)
+    : undefined;
+
+  // V1 inputs (supporting deprecating of runGroupIds)
   const testSuiteIdInput = getInput('test-suite-id');
-  const runGroupIdsInput = getList('run-group-ids');
   const testGroupIdInput = getInput('test-group-id');
-  const testSuiteId =
-    testSuiteIdInput || testGroupIdInput || runGroupIdsInput.at(0);
-  if (!testSuiteId) {
-    debug(`testGroupId: ${testSuiteId}`);
-    debug(`testSuiteId: ${testSuiteIdInput}`);
-    debug(`runGroupIdsInput: ${runGroupIdsInput}`);
-    debug(`testGroupIdInput: ${testGroupIdInput}`);
-    setFailed('the `testGroupId` input is required');
-    throw Error('the `testGroupId` input is required');
+  const testSuiteId = testSuiteIdInput || testGroupIdInput;
+
+  // Validation: require either projectId (v2) OR testSuiteId (v1), but not both
+  if (projectId && testSuiteId) {
+    setFailed(
+      'Cannot use both project-id (v2) and test-suite-id (v1). Please use one or the other.'
+    );
+    throw Error(
+      'Cannot use both project-id (v2) and test-suite-id (v1). Please use one or the other.'
+    );
+  }
+
+  if (!projectId && !testSuiteId) {
+    setFailed(
+      'Either project-id (v2) or test-suite-id (v1) is required. Please provide one.'
+    );
+    throw Error(
+      'Either project-id (v2) or test-suite-id (v1) is required. Please provide one.'
+    );
   }
 
   // @deprecated
@@ -62,20 +111,33 @@ export function parseInput() {
   const runInAsyncMode = getBoolInput('async');
   const environment = getInput('environment');
   const variableOverridesJson = getInput('variable-overrides');
-  const variableOverrides = parseObjectInput(
-    'variable-overrides',
-    variableOverridesJson
-  );
+  const variableOverrides = variableOverridesJson
+    ? parseObjectInput('variable-overrides', variableOverridesJson)
+    : {};
 
   const note = getInput('note');
 
+  if (projectId) {
+    return {
+      apiKey,
+      githubToken: githubToken || process.env.GITHUB_TOKEN,
+      githubComment,
+      runInAsyncMode,
+      version: 'v2' as const,
+      projectId,
+      runGroupName: runGroupName || undefined,
+      envOverrides
+    };
+  }
+
   return {
     apiKey,
-    testSuiteId,
-    urlReplacement,
     githubToken: githubToken || process.env.GITHUB_TOKEN,
     githubComment,
     runInAsyncMode,
+    version: 'v1' as const,
+    testSuiteId,
+    urlReplacement,
     environment,
     variableOverrides,
     note

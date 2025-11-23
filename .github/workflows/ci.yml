@@ -38,8 +38,8 @@ jobs:
         id: npm-ci-test
         run: npm run ci-test
 
-  test-action:
-    name: GitHub Actions Test
+  test-action-v1:
+    name: GitHub Actions Test (v1)
     runs-on: ubuntu-latest
 
     steps:
@@ -47,7 +47,7 @@ jobs:
         id: checkout
         uses: actions/checkout@v4
 
-      - name: Test Local Action
+      - name: Test Local Action (v1)
         id: test-action
         uses: ./
         with:
@@ -57,3 +57,24 @@ jobs:
       - name: Print Output
         id: output
         run: echo "${{ steps.test-action.outputs.success }}"
+
+  test-action-v2:
+    name: GitHub Actions Test (v2)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        id: checkout
+        uses: actions/checkout@v4
+
+      - name: Test Local Action (v2)
+        id: test-action-v2
+        uses: ./
+        with:
+          api-key: ${{ secrets.API_KEY }}
+          project-id: clle9fscu0000jf087maicxbc
+          run-group-name: CI TESTS
+
+      - name: Print Output
+        id: output
+        run: echo "${{ steps.test-action-v2.outputs.success }}"
