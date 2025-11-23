@@ -11,12 +11,45 @@ function getList(name: string, options?: InputOptions) {
   return getInput(name, options).split(NEWLINE_REGEX).filter(Boolean);
 }
 
-export function parseInput() {
+type BaseInput = {
+  apiKey: string;
+  githubToken: string | undefined;
+  githubComment: boolean;
+  runInAsyncMode: boolean;
+};
+
+type V2Input = BaseInput & {
+  version: 'v2';
+  projectId: string;
+  runGroupName: string | undefined;
+  envOverrides: Record<string, string> | undefined;
+};
+
+type V1Input = BaseInput & {
+  version: 'v1';
+  testSuiteId: string;
+  urlReplacement:
+    | {
+        original: string;
+        replacement: string;
+      }
+    | undefined;
+  environment: string;
+  variableOverrides: Record<
+    string,
+    string | { value: string | object; sensitive?: boolean }
+  >;
+  note: string;
+};
+
+export type ParsedInput = V1Input | V2Input;
+
+export function parseInput(): ParsedInput {
   const apiKey = getInput('api-key', { required: true });
 
   // V2 inputs
   const projectId = getInput('project-id');
-  const runGroupNames = getList('run-group-names').filter(Boolean);
+  const runGroupName = getInput('run-group-name').trim();
   const envOverridesJson = getInput('env-overrides');
   const envOverrides = envOverridesJson
     ? parseObjectInput('env-overrides', envOverridesJson)
@@ -45,8 +78,6 @@ export function parseInput() {
       'Either project-id (v2) or test-suite-id (v1) is required. Please provide one.'
     );
   }
-
-  const version = projectId ? 'v2' : 'v1';
 
   // @deprecated
   const deprecatedRawUrlReplacementInput = getList('domain-override');
@@ -80,30 +111,36 @@ export function parseInput() {
   const runInAsyncMode = getBoolInput('async');
   const environment = getInput('environment');
   const variableOverridesJson = getInput('variable-overrides');
-  const variableOverrides = parseObjectInput(
-    'variable-overrides',
-    variableOverridesJson
-  );
+  const variableOverrides = variableOverridesJson
+    ? parseObjectInput('variable-overrides', variableOverridesJson)
+    : {};
 
   const note = getInput('note');
 
+  if (projectId) {
+    return {
+      apiKey,
+      githubToken: githubToken || process.env.GITHUB_TOKEN,
+      githubComment,
+      runInAsyncMode,
+      version: 'v2' as const,
+      projectId,
+      runGroupName: runGroupName || undefined,
+      envOverrides
+    };
+  }
+
   return {
-    version,
     apiKey,
-    // V1 fields
+    githubToken: githubToken || process.env.GITHUB_TOKEN,
+    githubComment,
+    runInAsyncMode,
+    version: 'v1' as const,
     testSuiteId,
     urlReplacement,
     environment,
     variableOverrides,
-    note,
-    // V2 fields
-    projectId,
-    runGroupNames: runGroupNames.length > 0 ? runGroupNames : undefined,
-    envOverrides,
-    // Shared fields
-    githubToken: githubToken || process.env.GITHUB_TOKEN,
-    githubComment,
-    runInAsyncMode
+    note
   };
 }
 

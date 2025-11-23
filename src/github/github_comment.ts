@@ -143,7 +143,7 @@ export async function upsertGitHubCommentV2(
   runId: string,
   githubToken: string,
   resp: { result?: PlaywrightResultResponse; error?: boolean },
-  runGroupNames?: string[]
+  runGroupName?: string
 ) {
   const octokit = getOctokit(githubToken);
 
@@ -156,13 +156,9 @@ export async function upsertGitHubCommentV2(
   const commentIdentiifer = `<!-- stably_playwright_${projectId} -->`;
   const dashboardUrl = `https://app.stably.ai/project/${projectId}/playwright/history/${runId}?tab=specs`;
 
-  // If there is only one run group, use the name of the run group
-  const singleRunGroupName =
-    runGroupNames?.length === 1 ? runGroupNames[0] : undefined;
-
   // prettier-ignore
   const body = dedent`${commentIdentiifer}
-  # Stably Runner${singleRunGroupName ? ` - [Run Group '${singleRunGroupName}'](https://app.stably.ai/project/${projectId}/run-groups/${encodeURIComponent(singleRunGroupName)})` : ''}
+  # Stably Runner${runGroupName ? ` - [Run Group '${runGroupName}'](https://app.stably.ai/project/${projectId}/run-groups/${encodeURIComponent(runGroupName)})` : ''}
 
   Test Run Result: ${
     resp.error

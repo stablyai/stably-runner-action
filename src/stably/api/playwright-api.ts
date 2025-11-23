@@ -67,7 +67,7 @@ export async function startPlaywrightRun({
   projectId: string;
   apiKey: string;
   options: {
-    runGroupNames?: string[];
+    runGroupName?: string;
     envOverrides?: Record<string, string>;
   };
 }): Promise<PlaywrightRunResponse> {
@@ -76,7 +76,7 @@ export async function startPlaywrightRun({
   ]);
 
   const body = {
-    runGroupName: options.runGroupNames,
+    runGroupName: options.runGroupName,
     envOverrides: options.envOverrides
   };
 

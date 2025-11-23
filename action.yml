@@ -11,9 +11,9 @@ inputs:
     description: |-
       The project ID to execute (v2 only).
       Use this OR test-suite-id, not both.
-  run-group-names:
+  run-group-name:
     description: |-
-      Newline-separated list of Playwright project names to run (v2 only).
+      The Playwright project name to run (v2 only).
       Optional - if not provided, all projects will run.
   env-overrides:
     description: |-

@@ -5,7 +5,7 @@ import {
   upsertGitHubComment,
   upsertGitHubCommentV2
 } from './github/github_comment';
-import { parseInput } from './input';
+import { type ParsedInput, parseInput } from './input';
 import {
   startTestSuite,
   waitForTestSuiteRunResult
@@ -16,6 +16,9 @@ import {
 } from './stably/api/playwright-api';
 import { getSuiteRunDashboardUrl } from './stably/url';
 
+type V1Input = Extract<ParsedInput, { version: 'v1' }>;
+type V2Input = Extract<ParsedInput, { version: 'v2' }>;
+
 /**
  * The main function for the action.
  * @returns {Promise<void>} Resolves when the action is complete.
@@ -25,11 +28,7 @@ export async function run(): Promise<void> {
     const input = parseInput();
     const { version } = input;
 
-    if (version === 'v1') {
-      await runV1(input);
-    } else {
-      await runV2(input);
-    }
+    await (version === 'v1' ? runV1(input) : runV2(input));
   } catch (error) {
     // Fail the workflow run if an error occurs
     if (error instanceof Error) setFailed(error.message);
@@ -40,23 +39,17 @@ export async function run(): Promise<void> {
   }
 }
 
-async function runV1(input: ReturnType<typeof parseInput>): Promise<void> {
-  const {
-    apiKey,
-    urlReplacement,
-    githubComment,
-    githubToken,
-    testSuiteId,
-    runInAsyncMode,
-    environment,
-    variableOverrides,
-    note
-  } = input;
-
-  if (!testSuiteId) {
-    throw new Error('testSuiteId is required for v1');
-  }
-
+async function runV1({
+  apiKey,
+  urlReplacement,
+  githubComment,
+  githubToken,
+  testSuiteId,
+  runInAsyncMode,
+  environment,
+  variableOverrides,
+  note
+}: V1Input): Promise<void> {
   const shouldTunnel =
     urlReplacement &&
     new URL(urlReplacement.replacement).hostname === 'localhost';
@@ -118,26 +111,20 @@ async function runV1(input: ReturnType<typeof parseInput>): Promise<void> {
   }
 }
 
-async function runV2(input: ReturnType<typeof parseInput>): Promise<void> {
-  const {
-    apiKey,
-    projectId,
-    runGroupNames,
-    githubComment,
-    githubToken,
-    runInAsyncMode,
-    envOverrides
-  } = input;
-
-  if (!projectId) {
-    throw new Error('projectId is required for v2');
-  }
-
+async function runV2({
+  apiKey,
+  projectId,
+  runGroupName,
+  githubComment,
+  githubToken,
+  runInAsyncMode,
+  envOverrides
+}: V2Input): Promise<void> {
   const { runId } = await startPlaywrightRun({
     projectId,
     apiKey,
     options: {
-      runGroupNames,
+      runGroupName,
       envOverrides
     }
   });
@@ -176,7 +163,7 @@ async function runV2(input: ReturnType<typeof parseInput>): Promise<void> {
         {
           result: runResult
         },
-        runGroupNames
+        runGroupName
       );
     }
   } catch (e) {

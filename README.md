@@ -16,7 +16,7 @@ Run Playwright tests from your repository using Stably's agent-based runner.
 | ------------------ | ------------ | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | api-key            | ✅           |                       | Your API key                                                                                                                                                                                                                                                                                       |
 | project-id         | ✅           |                       | Your project ID                                                                                                                                                                                                                                                                                    |
-| run-group-names    |              |                       | Newline-separated list of Playwright project names to run. Optional - if not provided, all projects will run.                                                                                                                                                                                      |
+| run-group-name     |              |                       | The Playwright project name to run. Optional - if not provided, all projects will run.                                                                                                                                                                                                             |
 | env-overrides      |              |                       | A JSON object containing environment variable overrides. Each key is a variable name and the value is a string.                                                                                                                                                                                   |
 | github-comment     |              | true                  | When enabled, will leave a comment on either the commit or PR with relevant test results. Requires proper permissions (see [Permissions](#permissions) section below).                                                                                                                                            |
 | github-token       |              | `${{ github.token }}` | This token is used for leaving the comments on PRs/commits. By default, we'll use the GitHub actions bot token, but you can override this a repository scoped [PAT](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens). |
@@ -59,10 +59,8 @@ jobs:
         with:
           api-key: ${{ secrets.API_KEY }}
           project-id: YOUR_PROJECT_ID
-          # Optional: specify which Playwright projects to run
-          run-group-names: |
-            chromium
-            firefox
+          # Optional: specify a specific run group to only run (instead of all tests)
+          run-group-name: smoke-tests
           # Optional: override environment variables
           env-overrides: |
             {
