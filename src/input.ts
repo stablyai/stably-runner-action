@@ -1,4 +1,5 @@
 import { getInput, type InputOptions, setFailed } from '@actions/core';
+import { load } from 'js-yaml';
 
 const NEWLINE_REGEX = /\r|\n/;
 const TRUE_VALUES = new Set(['true', 'yes', '1']);
@@ -52,7 +53,10 @@ export function parseInput(): ParsedInput {
   const runGroupName = getInput('run-group-name').trim();
   const envOverridesJson = getInput('env-overrides');
   const envOverrides = envOverridesJson
-    ? parseObjectInput('env-overrides', envOverridesJson)
+    ? (parseObjectInput('env-overrides', envOverridesJson) as Record<
+        string,
+        string
+      >)
     : undefined;
 
   // V1 inputs (supporting deprecating of runGroupIds)
@@ -112,41 +116,53 @@ export function parseInput(): ParsedInput {
   const environment = getInput('environment');
   const variableOverridesJson = getInput('variable-overrides');
   const variableOverrides = variableOverridesJson
-    ? parseObjectInput('variable-overrides', variableOverridesJson)
+    ? (parseObjectInput('variable-overrides', variableOverridesJson) as Record<
+        string,
+        string | { value: string | object; sensitive?: boolean }
+      >)
     : {};
 
   const note = getInput('note');
-
-  if (projectId) {
-    return {
-      apiKey,
-      githubToken: githubToken || process.env.GITHUB_TOKEN,
-      githubComment,
-      runInAsyncMode,
-      version: 'v2' as const,
-      projectId,
-      runGroupName: runGroupName || undefined,
-      envOverrides
-    };
-  }
 
   return {
     apiKey,
     githubToken: githubToken || process.env.GITHUB_TOKEN,
     githubComment,
     runInAsyncMode,
-    version: 'v1' as const,
-    testSuiteId,
-    urlReplacement,
-    environment,
-    variableOverrides,
-    note
-  };
+    ...(projectId
+      ? {
+          version: 'v2' as const,
+          projectId,
+          runGroupName: runGroupName || undefined,
+          envOverrides
+        }
+      : {
+          version: 'v1' as const,
+          testSuiteId,
+          urlReplacement,
+          environment,
+          variableOverrides,
+          note
+        })
+  } as const;
 }
 
-function parseObjectInput(fieldName: string, json: string) {
+// This method also works with JSON as JSON is is valid YAML
+function parseObjectInput(fieldName: string, yaml: string) {
   try {
-    return JSON.parse(json);
+    const result = load(yaml);
+    if (
+      typeof result !== 'object' ||
+      result === null ||
+      Array.isArray(result)
+    ) {
+      throw new Error(
+        `Expected a key-value object, but got ${
+          Array.isArray(result) ? 'array' : typeof result
+        }`
+      );
+    }
+    return result;
   } catch (e) {
     setFailed(`${fieldName} contains an invalid object: ${e}`);
     throw e;

@@ -17,8 +17,11 @@ inputs:
       Optional - if not provided, all projects will run.
   env-overrides:
     description: |-
-      A JSON object containing environment variable overrides (v2 only).
+      A YAML string or JSON object containing environment variable overrides (v2 only).
       Each key is a variable name and the value is a string.
+      Example:
+        BASE_URL: https://staging.example.com
+        API_KEY: abc123
   test-group-id:
     description: The test group ID to execute (v1 only)
     deprecationMessage:
