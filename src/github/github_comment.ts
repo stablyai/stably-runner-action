@@ -156,9 +156,13 @@ export async function upsertGitHubCommentV2(
   const commentIdentiifer = `<!-- stably_playwright_${projectId} -->`;
   const dashboardUrl = `https://app.stably.ai/project/${projectId}/playwright/history/${runId}?tab=specs`;
 
+  // If there is only one run group, use the name of the run group
+  const singleRunGroupName =
+    runGroupNames?.length === 1 ? runGroupNames[0] : undefined;
+
   // prettier-ignore
   const body = dedent`${commentIdentiifer}
-  # Stably Runner${runGroupNames?.length === 1 ? ` - Run Group '${runGroupNames[0]}'` : ''}
+  # Stably Runner${singleRunGroupName ? ` - [Run Group '${singleRunGroupName}'](https://app.stably.ai/project/${projectId}/run-groups/${encodeURIComponent(singleRunGroupName)})` : ''}
 
   Test Run Result: ${
     resp.error
