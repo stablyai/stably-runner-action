@@ -51,8 +51,8 @@
       current releas
 
       ```bash
-      git tag -fa v3 -m "Update v3 tag"
-      git push origin v3 --force
+      git tag -fa v4 -m "Update v4 tag"
+      git push origin v4 --force
       ```
 
    For information more info see

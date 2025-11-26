@@ -150,7 +150,7 @@ async function runV2({
 
     if (numFailedTests > 0 || runResult.status !== 'PASSED') {
       setFailed(
-        `Playwright test run failed (${numFailedTests}/${totalTests} tests failed, status: ${runResult.status}). [Dashboard](https://app.stably.ai/project/${projectId}/playwright-runs/${runId})`
+        `Playwright test run failed (${numFailedTests}/${totalTests} tests failed, status: ${runResult.status}). [Dashboard](https://app.stably.ai/project/${projectId}/playwright/history/${runId}?tab=specs)`
       );
     }
 
