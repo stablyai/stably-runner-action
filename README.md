@@ -52,7 +52,7 @@ jobs:
     steps:
       - name: Stably Playwright Runner Action (v2)
         id: stably-runner
-        uses: stablyai/stably-runner-action@v3
+        uses: stablyai/stably-runner-action@v4
         with:
           api-key: ${{ secrets.API_KEY }}
           project-id: YOUR_PROJECT_ID
@@ -75,7 +75,7 @@ You can use the `env-overrides` option to enable containerized/local testing by 
 ```yaml
 - name: Stably Playwright Runner Action (v2)
   id: stably-runner
-  uses: stablyai/stably-runner-action@v3
+  uses: stablyai/stably-runner-action@v4
   with:
     api-key: ${{ secrets.API_KEY }}
     project-id: YOUR_PROJECT_ID
@@ -130,7 +130,7 @@ jobs:
     steps:
       - name: Stably Runner Action (v1)
         id: stably-runner
-        uses: stablyai/stably-runner-action@v3
+        uses: stablyai/stably-runner-action@v4
         with:
           api-key: ${{ secrets.API_KEY }}
           test-suite-id: TEST_SUITE_ID
@@ -152,7 +152,7 @@ You can use the `variable-overrides` option to enable containerized/local testin
 ```yaml
 - name: Stably Runner Action (v1)
   id: stably-runner
-  uses: stablyai/stably-runner-action@v3
+  uses: stablyai/stably-runner-action@v4
   with:
     api-key: ${{ secrets.API_KEY }}
     test-suite-id: TEST_SUITE_ID
