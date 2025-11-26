@@ -36241,7 +36241,7 @@ async function runV2({ apiKey, projectId, runGroupName, githubComment, githubTok
         const totalTests = runResult.results?.testCases.length ?? 0;
         (0, core_1.setOutput)('success', numFailedTests === 0 && runResult.status === 'PASSED');
         if (numFailedTests > 0 || runResult.status !== 'PASSED') {
-            (0, core_1.setFailed)(`Playwright test run failed (${numFailedTests}/${totalTests} tests failed, status: ${runResult.status}). [Dashboard](https://app.stably.ai/project/${projectId}/playwright-runs/${runId})`);
+            (0, core_1.setFailed)(`Playwright test run failed (${numFailedTests}/${totalTests} tests failed, status: ${runResult.status}). [Dashboard](https://app.stably.ai/project/${projectId}/playwright/history/${runId}?tab=specs)`);
         }
         // Github Comment Code
         if (githubComment && githubToken) {
