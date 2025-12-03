@@ -88,7 +88,7 @@ You can use the `env-overrides` option to enable containerized/local testing by 
 If your preview/deployment URL is generated dynamically (e.g., from Vercel, Netlify, or a custom deployment step), you can capture it from a previous step and pass it to Stably.
 
 > [!IMPORTANT]  
-> You must export the dynamic URL from your deployment step using `$GITHUB_OUTPUT`. This makes the value available to subsequent steps.
+> You must export the dynamic URL from your deployment step using `$GITHUB_OUTPUT`. This makes the value available to subsequent steps. GitHub Actions runs steps sequentially, so the Stably step will automatically wait for your deployment step to complete before running.
 
 ```yaml
 name: Stably with Dynamic URL
@@ -116,7 +116,7 @@ jobs:
           # This makes it available to later steps
           echo "preview_url=$PREVIEW_URL" >> $GITHUB_OUTPUT
 
-      # Step 2: Pass the dynamic URL to Stably
+      # Step 2 runs AFTER Step 1 completes (GitHub Actions is sequential)
       - name: Run Stably Tests
         uses: stablyai/stably-runner-action@v4
         with:
@@ -237,7 +237,7 @@ You can use the `variable-overrides` option to enable containerized/local testin
 If your preview/deployment URL is generated dynamically, you can capture it from a previous step and pass it to Stably.
 
 > [!IMPORTANT]  
-> You must export the dynamic URL from your deployment step using `$GITHUB_OUTPUT`. This makes the value available to subsequent steps.
+> You must export the dynamic URL from your deployment step using `$GITHUB_OUTPUT`. This makes the value available to subsequent steps. GitHub Actions runs steps sequentially, so the Stably step will automatically wait for your deployment step to complete before running.
 
 ```yaml
 name: Stably with Dynamic URL
@@ -264,7 +264,7 @@ jobs:
           # This makes it available to later steps
           echo "preview_url=$PREVIEW_URL" >> $GITHUB_OUTPUT
 
-      # Step 2: Pass the dynamic URL to Stably
+      # Step 2 runs AFTER Step 1 completes (GitHub Actions is sequential)
       - name: Run Stably Tests
         uses: stablyai/stably-runner-action@v4
         with:
