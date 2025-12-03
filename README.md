@@ -83,6 +83,76 @@ You can use the `env-overrides` option to enable containerized/local testing by 
       BASE_URL: http://localhost:3000
 ```
 
+### Using Dynamic URLs from Previous Steps
+
+If your preview/deployment URL is generated dynamically (e.g., from Vercel, Netlify, or a custom deployment step), you can capture it from a previous step and pass it to Stably.
+
+> [!IMPORTANT]  
+> You must export the dynamic URL from your deployment step using `$GITHUB_OUTPUT`. This makes the value available to subsequent steps.
+
+```yaml
+name: Stably with Dynamic URL
+
+on:
+  pull_request:
+
+permissions:
+  pull-requests: write
+  contents: write
+
+jobs:
+  deploy-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Deploy and capture the dynamic URL
+      - name: Deploy Preview
+        id: deploy
+        run: |
+          # Your deployment script here - this is just an example
+          # The URL could come from Vercel, Netlify, or any deployment tool
+          PREVIEW_URL="https://my-app-${{ github.sha }}.vercel.app"
+          
+          # ⚠️ IMPORTANT: You MUST export the URL using $GITHUB_OUTPUT
+          # This makes it available to later steps
+          echo "preview_url=$PREVIEW_URL" >> $GITHUB_OUTPUT
+
+      # Step 2: Pass the dynamic URL to Stably
+      - name: Run Stably Tests
+        uses: stablyai/stably-runner-action@v4
+        with:
+          api-key: ${{ secrets.API_KEY }}
+          project-id: YOUR_PROJECT_ID
+          env-overrides: |
+            BASE_URL: ${{ steps.deploy.outputs.preview_url }}
+```
+
+#### Real-World Example with Vercel
+
+```yaml
+jobs:
+  deploy-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to Vercel
+        id: vercel-deploy
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      # The Vercel action automatically outputs the preview URL
+      - name: Run Stably Tests on Preview
+        uses: stablyai/stably-runner-action@v4
+        with:
+          api-key: ${{ secrets.API_KEY }}
+          project-id: YOUR_PROJECT_ID
+          env-overrides: |
+            BASE_URL: ${{ steps.vercel-deploy.outputs.preview-url }}
+```
+
 ## Classic (v1)
 
 Run test suites using Stably's classic test runner.
@@ -162,6 +232,50 @@ You can use the `variable-overrides` option to enable containerized/local testin
       }
 ```
 
+### Using Dynamic URLs from Previous Steps
+
+If your preview/deployment URL is generated dynamically, you can capture it from a previous step and pass it to Stably.
+
+> [!IMPORTANT]  
+> You must export the dynamic URL from your deployment step using `$GITHUB_OUTPUT`. This makes the value available to subsequent steps.
+
+```yaml
+name: Stably with Dynamic URL
+
+on:
+  pull_request:
+
+permissions:
+  pull-requests: write
+  contents: write
+
+jobs:
+  deploy-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Deploy and capture the dynamic URL
+      - name: Deploy Preview
+        id: deploy
+        run: |
+          # Your deployment script here - this is just an example
+          PREVIEW_URL="https://my-app-${{ github.sha }}.example.com"
+          
+          # ⚠️ IMPORTANT: You MUST export the URL using $GITHUB_OUTPUT
+          # This makes it available to later steps
+          echo "preview_url=$PREVIEW_URL" >> $GITHUB_OUTPUT
+
+      # Step 2: Pass the dynamic URL to Stably
+      - name: Run Stably Tests
+        uses: stablyai/stably-runner-action@v4
+        with:
+          api-key: ${{ secrets.API_KEY }}
+          test-suite-id: TEST_SUITE_ID
+          variable-overrides: |
+            {
+              "APP_URL": "${{ steps.deploy.outputs.preview_url }}"
+            }
+```
+
 ## Permissions
 
 This action requires write permission to leave PR or commit comments.
@@ -185,3 +299,4 @@ permissions at the organization level
 
 See more info here:
 https://docs.github.com/en/actions/using-jobs/assigning-permissions-to-jobs
+
