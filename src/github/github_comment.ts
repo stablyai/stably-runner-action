@@ -1,8 +1,33 @@
+import { warning } from '@actions/core';
 import { context, getOctokit } from '@actions/github';
 import dedent from 'ts-dedent';
 import type { ResultResponse } from '../stably/api/agent-api';
 import type { PlaywrightResultResponse } from '../stably/api/playwright-api';
 import { getSuiteRunDashboardUrl } from '../stably/url';
+
+const isPermissionError = (error: unknown): boolean => {
+  if (error instanceof Error) {
+    const message = error.message.toLowerCase();
+    return (
+      message.includes('resource not accessible by integration') ||
+      message.includes('permission') ||
+      message.includes('403')
+    );
+  }
+  return false;
+};
+
+const handleCommentError = (error: unknown, action: string): void => {
+  if (isPermissionError(error)) {
+    warning(
+      `Skipping GitHub comment (${action}): insufficient permissions. ` +
+        `To enable comments, add 'contents: write' and 'pull-requests: write' to your workflow permissions. ` +
+        `See: https://docs.github.com/en/actions/using-jobs/assigning-permissions-to-jobs`
+    );
+  } else {
+    throw error;
+  }
+};
 
 export async function upsertGitHubComment(
   testSuiteId: string,
@@ -85,34 +110,38 @@ export async function upsertGitHubComment(
   )?.id;
 
   // Create or update commit/PR comment
-  if (context.payload.pull_request) {
-    if (existingCommentId) {
-      await octokit.rest.issues.updateComment({
-        ...context.repo,
-        comment_id: existingCommentId,
-        body
-      });
-    } else {
-      await octokit.rest.issues.createComment({
-        ...context.repo,
-        body,
-        issue_number: context.payload.pull_request.number
-      });
+  try {
+    if (context.payload.pull_request) {
+      if (existingCommentId) {
+        await octokit.rest.issues.updateComment({
+          ...context.repo,
+          comment_id: existingCommentId,
+          body
+        });
+      } else {
+        await octokit.rest.issues.createComment({
+          ...context.repo,
+          body,
+          issue_number: context.payload.pull_request.number
+        });
+      }
+    } else if (commitSha) {
+      if (existingCommentId) {
+        await octokit.rest.repos.updateCommitComment({
+          ...context.repo,
+          comment_id: existingCommentId,
+          body
+        });
+      } else {
+        await octokit.rest.repos.createCommitComment({
+          ...context.repo,
+          body,
+          commit_sha: commitSha
+        });
+      }
     }
-  } else if (commitSha) {
-    if (existingCommentId) {
-      await octokit.rest.repos.updateCommitComment({
-        ...context.repo,
-        comment_id: existingCommentId,
-        body
-      });
-    } else {
-      await octokit.rest.repos.createCommitComment({
-        ...context.repo,
-        body,
-        commit_sha: commitSha
-      });
-    }
+  } catch (error) {
+    handleCommentError(error, 'upsertGitHubComment');
   }
 }
 
@@ -214,33 +243,37 @@ export async function upsertGitHubCommentV2(
   )?.id;
 
   // Create or update commit/PR comment
-  if (context.payload.pull_request) {
-    if (existingCommentId) {
-      await octokit.rest.issues.updateComment({
-        ...context.repo,
-        comment_id: existingCommentId,
-        body
-      });
-    } else {
-      await octokit.rest.issues.createComment({
-        ...context.repo,
-        body,
-        issue_number: context.payload.pull_request.number
-      });
+  try {
+    if (context.payload.pull_request) {
+      if (existingCommentId) {
+        await octokit.rest.issues.updateComment({
+          ...context.repo,
+          comment_id: existingCommentId,
+          body
+        });
+      } else {
+        await octokit.rest.issues.createComment({
+          ...context.repo,
+          body,
+          issue_number: context.payload.pull_request.number
+        });
+      }
+    } else if (commitSha) {
+      if (existingCommentId) {
+        await octokit.rest.repos.updateCommitComment({
+          ...context.repo,
+          comment_id: existingCommentId,
+          body
+        });
+      } else {
+        await octokit.rest.repos.createCommitComment({
+          ...context.repo,
+          body,
+          commit_sha: commitSha
+        });
+      }
     }
-  } else if (commitSha) {
-    if (existingCommentId) {
-      await octokit.rest.repos.updateCommitComment({
-        ...context.repo,
-        comment_id: existingCommentId,
-        body
-      });
-    } else {
-      await octokit.rest.repos.createCommitComment({
-        ...context.repo,
-        body,
-        commit_sha: commitSha
-      });
-    }
+  } catch (error) {
+    handleCommentError(error, 'upsertGitHubCommentV2');
   }
 }

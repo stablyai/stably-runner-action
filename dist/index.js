@@ -35827,8 +35827,28 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.upsertGitHubComment = upsertGitHubComment;
 exports.upsertGitHubCommentV2 = upsertGitHubCommentV2;
 const github_1 = __nccwpck_require__(5438);
+const core_1 = __nccwpck_require__(2186);
 const ts_dedent_1 = __importDefault(__nccwpck_require__(3604));
 const url_1 = __nccwpck_require__(1650);
+const isPermissionError = (error) => {
+    if (error instanceof Error) {
+        const message = error.message.toLowerCase();
+        return (message.includes('resource not accessible by integration') ||
+            message.includes('permission') ||
+            message.includes('403'));
+    }
+    return false;
+};
+const handleCommentError = (error, action) => {
+    if (isPermissionError(error)) {
+        (0, core_1.warning)(`Skipping GitHub comment (${action}): insufficient permissions. ` +
+            `To enable comments, add 'contents: write' and 'pull-requests: write' to your workflow permissions. ` +
+            `See: https://docs.github.com/en/actions/using-jobs/assigning-permissions-to-jobs`);
+    }
+    else {
+        throw error;
+    }
+};
 async function upsertGitHubComment(testSuiteId, githubToken, resp) {
     const octokit = (0, github_1.getOctokit)(githubToken);
     const projectId = resp.result?.projectId || '';
@@ -35891,37 +35911,42 @@ async function upsertGitHubComment(testSuiteId, githubToken, resp) {
             : { data: [] };
     const existingCommentId = comments.find(comment => comment?.body?.startsWith(commentIdentiifer))?.id;
     // Create or update commit/PR comment
-    if (github_1.context.payload.pull_request) {
-        if (existingCommentId) {
-            await octokit.rest.issues.updateComment({
-                ...github_1.context.repo,
-                comment_id: existingCommentId,
-                body
-            });
+    try {
+        if (github_1.context.payload.pull_request) {
+            if (existingCommentId) {
+                await octokit.rest.issues.updateComment({
+                    ...github_1.context.repo,
+                    comment_id: existingCommentId,
+                    body
+                });
+            }
+            else {
+                await octokit.rest.issues.createComment({
+                    ...github_1.context.repo,
+                    body,
+                    issue_number: github_1.context.payload.pull_request.number
+                });
+            }
         }
-        else {
-            await octokit.rest.issues.createComment({
-                ...github_1.context.repo,
-                body,
-                issue_number: github_1.context.payload.pull_request.number
-            });
+        else if (commitSha) {
+            if (existingCommentId) {
+                await octokit.rest.repos.updateCommitComment({
+                    ...github_1.context.repo,
+                    comment_id: existingCommentId,
+                    body
+                });
+            }
+            else {
+                await octokit.rest.repos.createCommitComment({
+                    ...github_1.context.repo,
+                    body,
+                    commit_sha: commitSha
+                });
+            }
         }
     }
-    else if (commitSha) {
-        if (existingCommentId) {
-            await octokit.rest.repos.updateCommitComment({
-                ...github_1.context.repo,
-                comment_id: existingCommentId,
-                body
-            });
-        }
-        else {
-            await octokit.rest.repos.createCommitComment({
-                ...github_1.context.repo,
-                body,
-                commit_sha: commitSha
-            });
-        }
+    catch (error) {
+        handleCommentError(error, 'upsertGitHubComment');
     }
 }
 function listTestMarkDown({ testSuiteRunId, tests, projectId }) {
@@ -35986,37 +36011,42 @@ async function upsertGitHubCommentV2(projectId, runId, githubToken, resp, runGro
             : { data: [] };
     const existingCommentId = comments.find(comment => comment?.body?.startsWith(commentIdentiifer))?.id;
     // Create or update commit/PR comment
-    if (github_1.context.payload.pull_request) {
-        if (existingCommentId) {
-            await octokit.rest.issues.updateComment({
-                ...github_1.context.repo,
-                comment_id: existingCommentId,
-                body
-            });
+    try {
+        if (github_1.context.payload.pull_request) {
+            if (existingCommentId) {
+                await octokit.rest.issues.updateComment({
+                    ...github_1.context.repo,
+                    comment_id: existingCommentId,
+                    body
+                });
+            }
+            else {
+                await octokit.rest.issues.createComment({
+                    ...github_1.context.repo,
+                    body,
+                    issue_number: github_1.context.payload.pull_request.number
+                });
+            }
         }
-        else {
-            await octokit.rest.issues.createComment({
-                ...github_1.context.repo,
-                body,
-                issue_number: github_1.context.payload.pull_request.number
-            });
+        else if (commitSha) {
+            if (existingCommentId) {
+                await octokit.rest.repos.updateCommitComment({
+                    ...github_1.context.repo,
+                    comment_id: existingCommentId,
+                    body
+                });
+            }
+            else {
+                await octokit.rest.repos.createCommitComment({
+                    ...github_1.context.repo,
+                    body,
+                    commit_sha: commitSha
+                });
+            }
         }
     }
-    else if (commitSha) {
-        if (existingCommentId) {
-            await octokit.rest.repos.updateCommitComment({
-                ...github_1.context.repo,
-                comment_id: existingCommentId,
-                body
-            });
-        }
-        else {
-            await octokit.rest.repos.createCommitComment({
-                ...github_1.context.repo,
-                body,
-                commit_sha: commitSha
-            });
-        }
+    catch (error) {
+        handleCommentError(error, 'upsertGitHubCommentV2');
     }
 }
 
