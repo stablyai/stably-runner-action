@@ -11,10 +11,16 @@ inputs:
     description: |-
       The project ID to execute (v2 only).
       Use this OR test-suite-id, not both.
+  playwright-project-name:
+    description: |-
+      The Playwright project name(s) to run (v2 only).
+      Maps to the --project CLI flag.
+      Optional - if not provided, all projects will run.
   run-group-name:
     description: |-
-      The Playwright project name to run (v2 only).
-      Optional - if not provided, all projects will run.
+      Deprecated. Use playwright-project-name instead.
+    deprecationMessage:
+      'This input is deprecated. Please use playwright-project-name instead.'
   env-overrides:
     description: |-
       A YAML string or JSON object containing environment variable overrides (v2 only).

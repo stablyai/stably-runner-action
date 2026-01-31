@@ -35954,7 +35954,7 @@ function listTestMarkDown({ testSuiteRunId, tests, projectId }) {
         .map(({ runId, testName }) => `  * [${testName}](http://app.stably.ai/project/${projectId}/history/g_${testSuiteRunId}/run/${runId})`)
         .join('\n');
 }
-async function upsertGitHubCommentV2(projectId, runId, githubToken, resp, runGroupName) {
+async function upsertGitHubCommentV2(projectId, runId, githubToken, resp, playwrightProjectName) {
     const octokit = (0, github_1.getOctokit)(githubToken);
     const result = resp.result;
     const testCases = result?.results?.testCases || [];
@@ -35965,7 +35965,7 @@ async function upsertGitHubCommentV2(projectId, runId, githubToken, resp, runGro
     const dashboardUrl = `https://app.stably.ai/project/${projectId}/playwright/history/${runId}?tab=specs`;
     // prettier-ignore
     const body = (0, ts_dedent_1.default) `${commentIdentiifer}
-  # Stably Runner${runGroupName ? ` - [Run Group '${runGroupName}'](https://app.stably.ai/project/${projectId}/run-groups/${encodeURIComponent(runGroupName)})` : ''}
+  # Stably Runner${playwrightProjectName ? ` - [Playwright Project '${playwrightProjectName}'](https://app.stably.ai/project/${projectId}/playwright)` : ''}
 
   Test Run Result: ${resp.error
         ? '❌ Error - The Action ran into an error while calling the Stably backend. Please re-run'
@@ -36074,7 +36074,10 @@ function parseInput() {
     const apiKey = (0, core_1.getInput)('api-key', { required: true });
     // V2 inputs
     const projectId = (0, core_1.getInput)('project-id');
-    const runGroupName = (0, core_1.getInput)('run-group-name').trim();
+    // playwright-project-name is the new preferred input, run-group-name is deprecated
+    const playwrightProjectNameInput = (0, core_1.getInput)('playwright-project-name').trim();
+    const runGroupNameInput = (0, core_1.getInput)('run-group-name').trim();
+    const playwrightProjectName = playwrightProjectNameInput || runGroupNameInput;
     const envOverridesJson = (0, core_1.getInput)('env-overrides');
     const envOverrides = envOverridesJson
         ? parseObjectInput('env-overrides', envOverridesJson)
@@ -36127,7 +36130,7 @@ function parseInput() {
             ? {
                 version: 'v2',
                 projectId,
-                runGroupName: runGroupName || undefined,
+                playwrightProjectName: playwrightProjectName || undefined,
                 envOverrides
             }
             : {
@@ -36247,12 +36250,12 @@ async function runV1({ apiKey, urlReplacement, githubComment, githubToken, testS
         (0, core_1.setFailed)(e instanceof Error ? e.message : `An unknown error occurred`);
     }
 }
-async function runV2({ apiKey, projectId, runGroupName, githubComment, githubToken, runInAsyncMode, envOverrides }) {
+async function runV2({ apiKey, projectId, playwrightProjectName, githubComment, githubToken, runInAsyncMode, envOverrides }) {
     const { runId } = await (0, playwright_api_1.startPlaywrightRun)({
         projectId,
         apiKey,
         options: {
-            runGroupName,
+            playwrightProjectName,
             envOverrides
         }
     });
@@ -36277,7 +36280,7 @@ async function runV2({ apiKey, projectId, runGroupName, githubComment, githubTok
         if (githubComment && githubToken) {
             await (0, github_comment_1.upsertGitHubCommentV2)(projectId, runId, githubToken, {
                 result: runResult
-            }, runGroupName);
+            }, playwrightProjectName);
         }
     }
     catch (e) {
@@ -36398,7 +36401,7 @@ async function startPlaywrightRun({ projectId, apiKey, options }) {
         new auth_1.BearerCredentialHandler(apiKey)
     ]);
     const body = {
-        runGroupName: options.runGroupName,
+        playwrightProjectName: options.playwrightProjectName,
         envOverrides: options.envOverrides
     };
     const runUrl = new URL(`/v1/projects/${projectId}/runs`, API_ENDPOINT).href;
