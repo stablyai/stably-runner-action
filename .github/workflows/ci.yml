@@ -73,7 +73,7 @@ jobs:
         with:
           api-key: ${{ secrets.API_KEY }}
           project-id: clle9fscu0000jf087maicxbc
-          playwright-project-name: CI Test
+          playwright-project-name: CI
 
       - name: Print Output
         id: output
