@@ -172,7 +172,7 @@ export async function upsertGitHubCommentV2(
   runId: string,
   githubToken: string,
   resp: { result?: PlaywrightResultResponse; error?: boolean },
-  runGroupName?: string
+  playwrightProjectName?: string
 ) {
   const octokit = getOctokit(githubToken);
 
@@ -187,7 +187,7 @@ export async function upsertGitHubCommentV2(
 
   // prettier-ignore
   const body = dedent`${commentIdentiifer}
-  # Stably Runner${runGroupName ? ` - [Run Group '${runGroupName}'](https://app.stably.ai/project/${projectId}/run-groups/${encodeURIComponent(runGroupName)})` : ''}
+  # Stably Runner${playwrightProjectName ? ` - [Playwright Project '${playwrightProjectName}'](https://app.stably.ai/project/${projectId}/playwright)` : ''}
 
   Test Run Result: ${
     resp.error

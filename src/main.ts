@@ -114,7 +114,7 @@ async function runV1({
 async function runV2({
   apiKey,
   projectId,
-  runGroupName,
+  playwrightProjectName,
   githubComment,
   githubToken,
   runInAsyncMode,
@@ -124,7 +124,7 @@ async function runV2({
     projectId,
     apiKey,
     options: {
-      runGroupName,
+      playwrightProjectName,
       envOverrides
     }
   });
@@ -163,7 +163,7 @@ async function runV2({
         {
           result: runResult
         },
-        runGroupName
+        playwrightProjectName
       );
     }
   } catch (e) {

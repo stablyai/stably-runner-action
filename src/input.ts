@@ -22,7 +22,7 @@ type BaseInput = {
 type V2Input = BaseInput & {
   version: 'v2';
   projectId: string;
-  runGroupName: string | undefined;
+  playwrightProjectName: string | undefined;
   envOverrides: Record<string, string> | undefined;
 };
 
@@ -50,7 +50,10 @@ export function parseInput(): ParsedInput {
 
   // V2 inputs
   const projectId = getInput('project-id');
-  const runGroupName = getInput('run-group-name').trim();
+  // playwright-project-name is the new preferred input, run-group-name is deprecated
+  const playwrightProjectNameInput = getInput('playwright-project-name').trim();
+  const runGroupNameInput = getInput('run-group-name').trim();
+  const playwrightProjectName = playwrightProjectNameInput || runGroupNameInput;
   const envOverridesJson = getInput('env-overrides');
   const envOverrides = envOverridesJson
     ? (parseObjectInput('env-overrides', envOverridesJson) as Record<
@@ -133,7 +136,7 @@ export function parseInput(): ParsedInput {
       ? {
           version: 'v2' as const,
           projectId,
-          runGroupName: runGroupName || undefined,
+          playwrightProjectName: playwrightProjectName || undefined,
           envOverrides
         }
       : {
