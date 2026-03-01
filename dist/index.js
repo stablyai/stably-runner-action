@@ -36082,6 +36082,7 @@ function parseInput() {
     const envOverrides = envOverridesJson
         ? parseObjectInput('env-overrides', envOverridesJson)
         : undefined;
+    const environmentName = (0, core_1.getInput)('environment-name').trim() || undefined;
     // V1 inputs (supporting deprecating of runGroupIds)
     const testSuiteIdInput = (0, core_1.getInput)('test-suite-id');
     const testGroupIdInput = (0, core_1.getInput)('test-group-id');
@@ -36131,7 +36132,8 @@ function parseInput() {
                 version: 'v2',
                 projectId,
                 playwrightProjectName: playwrightProjectName || undefined,
-                envOverrides
+                envOverrides,
+                environmentName
             }
             : {
                 version: 'v1',
@@ -36250,13 +36252,14 @@ async function runV1({ apiKey, urlReplacement, githubComment, githubToken, testS
         (0, core_1.setFailed)(e instanceof Error ? e.message : `An unknown error occurred`);
     }
 }
-async function runV2({ apiKey, projectId, playwrightProjectName, githubComment, githubToken, runInAsyncMode, envOverrides }) {
+async function runV2({ apiKey, projectId, playwrightProjectName, githubComment, githubToken, runInAsyncMode, envOverrides, environmentName }) {
     const { runId } = await (0, playwright_api_1.startPlaywrightRun)({
         projectId,
         apiKey,
         options: {
             playwrightProjectName,
-            envOverrides
+            envOverrides,
+            environmentName
         }
     });
     (0, core_1.setOutput)('testSuiteRunId', runId);
@@ -36402,7 +36405,8 @@ async function startPlaywrightRun({ projectId, apiKey, options }) {
     ]);
     const body = {
         playwrightProjectName: options.playwrightProjectName,
-        envOverrides: options.envOverrides
+        envOverrides: options.envOverrides,
+        environmentName: options.environmentName
     };
     const runUrl = new URL(`/v1/projects/${projectId}/runs`, API_ENDPOINT).href;
     const runResponse = await httpClient.postJson(runUrl, body, {

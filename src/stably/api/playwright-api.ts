@@ -69,6 +69,7 @@ export async function startPlaywrightRun({
   options: {
     playwrightProjectName?: string;
     envOverrides?: Record<string, string>;
+    environmentName?: string;
   };
 }): Promise<PlaywrightRunResponse> {
   const httpClient = new HttpClient('github-action', [
@@ -77,7 +78,8 @@ export async function startPlaywrightRun({
 
   const body = {
     playwrightProjectName: options.playwrightProjectName,
-    envOverrides: options.envOverrides
+    envOverrides: options.envOverrides,
+    environmentName: options.environmentName
   };
 
   const runUrl = new URL(`/v1/projects/${projectId}/runs`, API_ENDPOINT).href;
