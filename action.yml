@@ -28,6 +28,11 @@ inputs:
       Example:
         BASE_URL: https://staging.example.com
         API_KEY: abc123
+  environment-name:
+    description: |-
+      Name of the environment to use for this run (v2 only).
+      For example: "Staging", "Production".
+      When omitted, falls back to the project's default environment.
   test-group-id:
     description: The test group ID to execute (v1 only)
     deprecationMessage:
@@ -65,7 +70,8 @@ inputs:
     default: 'false'
   environment:
     description: |-
-      The environment to inherit variables from (v1 only, v2 support soon).
+      The environment to inherit variables from (v1 only).
+      For v2, use environment-name instead.
       Defaults to 'PRODUCTION'.
     default: 'PRODUCTION'
   variable-overrides:

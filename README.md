@@ -18,8 +18,9 @@ Run test suites using Stably's agent (v2) test runner.
 | api-key            | ✅           |                       | Your API key                                                                                                                                                                                                                                                                                       |
 | project-id         | ✅           |                       | Your Stably project ID                                                                                                                                                                                                                                                                             |
 | playwright-project-name |         |                       | The Playwright project name to run. Maps to the `--project` CLI flag. Optional - if not provided, all projects will run.                                                                                                                                                                          |
-| env-overrides      |              |                       | A YAML string or JSON object containing environment variable overrides. Each key is a variable name and the value is a string.                                                                                                                                                                                    |
-| github-comment     |              | true                  | When enabled, will leave a comment on either the commit or PR with relevant test results. Requires proper permissions (see [Permissions](#permissions) section below).                                                                                                                             |               |
+| environment-name   |              |                       | Name of the environment to use for this run (e.g. "Staging", "Production"). When omitted, falls back to the project's default environment.                                                                                                                                                        |
+| env-overrides      |              |                       | A YAML string or JSON object containing environment variable overrides. Each key is a variable name and the value is a string. These take precedence over environment variables.                                                                                                                   |
+| github-comment     |              | true                  | When enabled, will leave a comment on either the commit or PR with relevant test results. Requires proper permissions (see [Permissions](#permissions) section below).                                                                                                                             |
 | github-token       |              | `${{ github.token }}` | This token is used for leaving the comments on PRs/commits. By default, we'll use the GitHub actions bot token, but you can override this a repository scoped [PAT](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens).          |
 | async              |              | false                 | If set, will launch the tests but not wait for them to finish and the action will always output success. Note: Github comments will not function if this is set                                                                                                                                    |
 
@@ -58,7 +59,9 @@ jobs:
           project-id: YOUR_PROJECT_ID
           # Optional: specify Playwright project(s) to run (instead of all projects)
           playwright-project-name: smoke-tests
-          # Optional: override environment variables
+          # Optional: select which environment to load variables from
+          environment-name: Staging
+          # Optional: override specific environment variables
           env-overrides: |
             BASE_URL: https://staging.example.com
             API_KEY: abc123

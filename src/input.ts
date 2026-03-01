@@ -24,6 +24,7 @@ type V2Input = BaseInput & {
   projectId: string;
   playwrightProjectName: string | undefined;
   envOverrides: Record<string, string> | undefined;
+  environmentName: string | undefined;
 };
 
 type V1Input = BaseInput & {
@@ -61,6 +62,7 @@ export function parseInput(): ParsedInput {
         string
       >)
     : undefined;
+  const environmentName = getInput('environment-name').trim() || undefined;
 
   // V1 inputs (supporting deprecating of runGroupIds)
   const testSuiteIdInput = getInput('test-suite-id');
@@ -137,7 +139,8 @@ export function parseInput(): ParsedInput {
           version: 'v2' as const,
           projectId,
           playwrightProjectName: playwrightProjectName || undefined,
-          envOverrides
+          envOverrides,
+          environmentName
         }
       : {
           version: 'v1' as const,

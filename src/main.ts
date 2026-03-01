@@ -118,14 +118,16 @@ async function runV2({
   githubComment,
   githubToken,
   runInAsyncMode,
-  envOverrides
+  envOverrides,
+  environmentName
 }: V2Input): Promise<void> {
   const { runId } = await startPlaywrightRun({
     projectId,
     apiKey,
     options: {
       playwrightProjectName,
-      envOverrides
+      envOverrides,
+      environmentName
     }
   });
   setOutput('testSuiteRunId', runId);
